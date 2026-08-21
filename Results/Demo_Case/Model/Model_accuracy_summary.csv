@@ -1,0 +1,19 @@
+Predicted parameter,Status,Model type,Input parameters,Train rows,Test rows,RMSE,MAE,MAPE_%,R2
+Quench_tower_overhead_temp,Trained,data model,"Quench_tower_Top_Reflux_Temp, Cooling_water_supply_temp",6414.0,1604.0,0.2146,0.1653,0.43,0.9976
+CGC_STAGE_1_SUCTION_PRESSURE,Trained,data model,"DMCTF_feed, Cooling_water_supply_temp, Quench_tower_overhead_temp, CGC_TURBINE_1_SPEED_(RPM), CGC_TURBINE_2_SPEED_(RPM), Average_interstage_differential_pressure",6414.0,1604.0,2.2456,1.713,1.94,0.9711
+Coil_Avg_COT,Simulation (no formulas plug-in found for this plant),first principle,,,,,,,
+CGC_5TH_STG_DISCH_PRES,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE",6414.0,1604.0,21.2994,15.15,0.39,0.8377
+CGC_Power_KW,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE, CGC_5TH_STG_DISCH_PRES, CGC_TURBINE_1_SPEED_(RPM), Cooling_water_supply_temp",6414.0,1604.0,340.8123,242.8293,0.61,0.9374
+CGC_Turbine_HP_Steam_flow,Trained,data model,"DMCTF_feed, Average_interstage_differential_pressure, CGC_Power_KW",6414.0,1604.0,7.1489,5.9846,2.87,0.9098
+CHG_GAS_FLOW_TO_DRYER,Trained,data model,DMCTF_feed,6414.0,1604.0,1.4585,1.125,0.58,0.955
+PRC_1ST_STAGE_Suction_FLOW,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE, CGC_5TH_STG_DISCH_PRES, PRC_turbine_RPM",6414.0,1604.0,4.2873,2.8747,0.63,0.9023
+PRC_1ST_STAGE_Suction_PRESSURE,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE, CGC_5TH_STG_DISCH_PRES, PRC_turbine_RPM",6414.0,1604.0,0.2534,0.1995,0.76,0.9229
+PRC_2nd_stage_drum_Overhead_Flow,Trained,data model,"DMCTF_feed, Avg_MW, PRC_1ST_STAGE_Suction_FLOW, PRC_1ST_STAGE_Suction_PRESSURE, PRC_turbine_RPM, PRC_1ST_STAGE_Suction_TEMP",6414.0,1604.0,5.7365,3.9855,1.62,0.7006
+PRC_Total_estimated_power_MW,Simulation (no formulas plug-in found for this plant),first principle,,,,,,,
+ERC_2nd_stage_drum_Overhead_Flow,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE, CGC_5TH_STG_DISCH_PRES, ERC_turbine_Speed, Avg_MW, PRC_1ST_STAGE_Suction_FLOW",6414.0,1604.0,1.6806,1.3426,2.58,0.7373
+ERC_turbine_steam_flow,Trained,data model,"DMCTF_feed, CGC_5TH_STG_DISCH_PRES, ERC_2nd_stage_drum_Overhead_Flow, ERC_turbine_Speed",6414.0,1604.0,0.7662,0.6055,1.48,0.8785
+ERC_power,Trained,data model,"DMCTF_feed, ERC_turbine_steam_flow",6414.0,1604.0,80.9819,42.8835,0.45,0.9745
+ERC_1ST_STAGE_Suction_FLOW,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE, CGC_5TH_STG_DISCH_PRES, ERC_turbine_Speed, ERC_turbine_steam_flow",6414.0,1604.0,0.6572,0.514,2.11,0.707
+ERC_1ST_STAGE_Suction_PRESSURE,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE, CGC_5TH_STG_DISCH_PRES, ERC_turbine_Speed, ERC_turbine_steam_flow, Cooling_water_supply_temp",6414.0,1604.0,2.1038,1.684,11.83,0.7834
+TOTAL_ETHYLENE_LOSS_to_fuel,Trained,data model,"DMCTF_feed, Demeth_No2_feed_flow, Demeth_tower_pressure_control_OP, PRC_1ST_STAGE_Suction_PRESSURE, Demeth_Overhead_temp, Demeth_tower_reflux_temp, Demeth_feed_separator_OH_valve_opening, Fresh_ethane_feed",6414.0,1604.0,0.1914,0.1355,16.28,0.5767
+Ethylene_product_flow,Trained,data model,"DMCTF_feed, CGC_STAGE_1_SUCTION_PRESSURE, CGC_5TH_STG_DISCH_PRES, PRC_1ST_STAGE_Suction_PRESSURE, PRC_2nd_stage_drum_Overhead_Flow, Fresh_ethane_feed",6414.0,1604.0,1.1644,0.8496,0.91,0.906

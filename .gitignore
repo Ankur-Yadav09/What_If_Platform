@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+what-if-venv/
+
+# Runtime data / generated artifacts
+dashboard.db
+saved_models/*
+!saved_models/.gitkeep
+mlflow.db
+mlruns/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+artifacts/
+
+/Data
+/mockups
+/Scripts/dashboard.db
