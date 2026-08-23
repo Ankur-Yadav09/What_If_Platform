@@ -1,6 +1,6 @@
 # What-If Studio — Exact Module Flow
 
-This is a screen-by-screen, request-by-request walkthrough of the What-If Studio module: every page, every backend call it makes, and exactly how a scenario gets computed. For the general codebase layering (routes→schemas→services→src, frontend page→api→component), see [`ARCHITECTURE.md`](./ARCHITECTURE.md). For setup/run instructions, see [`README.md`](./README.md).
+This is a screen-by-screen, request-by-request walkthrough of the What-If Studio module: every page, every backend call it makes, and exactly how a scenario gets computed. For the general codebase layering (routes→schemas→services→src, frontend page→api→component), see [`ARCHITECTURE.md`](./ARCHITECTURE.md). For setup/run instructions, see [`README.md`](../README.md).
 
 ---
 
@@ -16,7 +16,23 @@ Sidebar → "What-If Studio" group
 └── What-If Analysis       /what-if/dashboard     → DashboardPage.tsx
 ```
 
-`What-If Setup` always opens on **System Config**, regardless of how you navigated there (no "resume where I left off" auto-jump — that was removed deliberately, see §8).
+```mermaid
+graph TD
+    Sidebar["Sidebar — 'What-If Studio' group"] --> Welcome["Welcome<br/>/what-if/overview<br/>OverviewPage.tsx"]
+    Sidebar --> Setup["What-If Setup<br/>/what-if/case-setup<br/>WhatIfSetupPage.tsx"]
+    Sidebar --> Dashboard["What-If Analysis<br/>/what-if/dashboard<br/>DashboardPage.tsx"]
+
+    Setup --> Sys["System Config (tab 0, default)<br/>SystemConfigTab.tsx"]
+    Setup --> Mdl["Model Config (tab 1)<br/>ModelConfigTab.tsx"]
+    Setup --> Wic["What-If Config (tab 2)<br/>WhatIfConfigTab.tsx"]
+
+    Welcome -. "+ New Case / Switch Case" .-> Setup
+    Sys -. "Save auto-advances" .-> Mdl
+    Mdl -. "Save auto-advances" .-> Wic
+    Wic -. "gateReady" .-> Dashboard
+```
+
+`What-If Setup` always opens on **System Config**, regardless of how you navigated there (no "resume where I left off" auto-jump — that was removed deliberately, see §8). The dotted auto-advance edges above are a UI convenience within a single visit, not a remembered "resume here" state.
 
 ---
 
@@ -34,6 +50,30 @@ What-If Studio has **no server-side session**, but it does have real per-**case*
 | Soft Sensor experiments (any algorithm) | `saved_models/<case_id>/<model_name>/` + `dashboard.db`'s `model_registry` table | The Soft Sensor "Build Model" page (reused inside Model Development) | ✅ |
 | **The one bridge**: which experiment is "Selected for What-If Analysis" per parameter | `dashboard.db`'s `whatif_model_selection(parameter, model_name, selected_at, case_id)` | Experimentation & Model Selection's "Use for What-If Analysis" action | ✅ |
 | Uploaded datasets, preprocessing projects (`artifacts/<project_id>/`) | `dashboard.db`'s `datasets` table (`UNIQUE(case_id, name)`), `artifacts/<case_id>/<project_id>/` | Soft Sensor "Connect Data" / Feature Selection's "Final Apply" | ✅ |
+
+```mermaid
+graph TD
+    Active(("activeCaseId<br/>(ActiveCaseContext, localStorage)")) -.stamped by request interceptor.-> Q["?case_id=... on every<br/>What-If / Soft-Sensor-adjacent request"]
+
+    subgraph CaseA["Data/&lt;case_id&gt;/ + Results/&lt;case_id&gt;/ + saved_models/&lt;case_id&gt;/"]
+        A1["Config_file.xlsx (8 sheets)"]
+        A2["DMC_Screen_tags_data.xlsx"]
+        A3["Model/kalman_filter_model_*.pkl"]
+        A4["Soft Sensor experiments"]
+    end
+
+    subgraph CaseDefault["'default' case (flat layout, zero migration)"]
+        D1["Data/Config_file.xlsx"]
+        D2["Results/Model/*.pkl"]
+        D3["saved_models/&lt;model_name&gt;/"]
+    end
+
+    Q --> CaseA
+    Q --> CaseDefault
+    Reg[("dashboard.db<br/>whatif_cases (case registry)<br/>model_registry / whatif_model_selection / datasets<br/>— all carry a case_id column")]
+    CaseA -.-> Reg
+    CaseDefault -.-> Reg
+```
 
 `"default"` is a real `case_id`, not a placeholder — every path function (`src/whatif/paths.py`) and case-scoped store (`src/persistence/model_store.py`) resolves it to the original flat layout (`Data/Config_file.xlsx`, `Results/Model/`, `saved_models/<model_name>/`) with zero migration, so everything that existed before case isolation shipped kept working unchanged as "Default Case." See **§3a** for exactly how the active case is chosen and threaded through every request.
 
@@ -98,7 +138,21 @@ Every row-scoped editor (PI Tag Mapping, MV/DV/CV, Model Mapping) hides rows out
 
 **Model Development** — a single clickable stepper (`ModelDevelopmentStepper.tsx`, not a second tab strip) drives 5 phases, freely revisitable in any order:
 
-1. **Connect Data** — reuses `UploadPage.tsx` verbatim (Soft Sensor's own page, `hideStepper` suppresses its standalone stepper here).
+```mermaid
+graph LR
+    P1["1. Connect Data<br/>(UploadPage.tsx)"]
+    P2["2. Data Health<br/>(PreprocessPage.tsx +<br/>Correlation Matrix)"]
+    P3["3. Model Definition<br/>(ModelMappingEditor.tsx)"]
+    P4["4. AI Feature Discovery<br/>(FeatureSelectionPage.tsx)"]
+    P5["5. Build Model<br/>(TrainPage.tsx)"]
+    ESel["Experimentation &<br/>Model Selection tab"]
+
+    P1 <--> P2 <--> P3 <--> P4 <--> P5
+    P5 -- "finishing jumps to" --> ESel
+    ESel -. "no Selected experiment<br/>→ Advanced: train Kalman" .-> P5
+```
+
+1. **Connect Data** — reuses `UploadPage.tsx` verbatim (a page from the former standalone "Soft Sensor Module," which no longer has its own sidebar entry or landing page — `hideStepper` suppresses its standalone stepper here).
 2. **Data Health** — reuses `PreprocessPage.tsx`, plus a What-If-specific Correlation Matrix section (`CorrelationMatrixView.tsx` → `GET /api/what-if/config/correlation-matrix`, Pearson correlation over the training workbook).
 3. **Model Definition** — `ModelMappingEditor.tsx` (`GET/PUT /api/what-if/config/model-mapping`): maps each Predicted Parameter to a Section and its input tags. Each row's 8 input dropdowns are scoped to *that row's own* chosen Section (`modelInputOptionsForSection()` in `caseSetupHelpers.ts`) — a row with no Section gets the complete unfiltered tag list. Starts collapsed to just "In 1"; "+ Add Input" reveals more, up to 8, without hiding columns a workbook already has data in.
 4. **AI Feature Discovery** — reuses `FeatureSelectionPage.tsx` verbatim. Its in-progress state (target/candidate columns, pathway, method selections, the running/last job id) is saved to `localStorage` keyed by case+dataset, restored synchronously on mount (not via a `useEffect`, to avoid a React Strict Mode double-invoke race that would otherwise clobber the restore with stale defaults) — so switching to Build Model and back no longer resets it to "select Y feature."
@@ -123,6 +177,20 @@ Every row-scoped editor (PI Tag Mapping, MV/DV/CV, Model Mapping) hides rows out
 
 A single flowing page (deliberately not tabbed), gated behind `gateReady` (PI Tag Mapping + Model Mapping present, and every parameter has a model — Kalman or Selected experiment). In order:
 
+```mermaid
+flowchart TD
+    Gate{gateReady?} -- no --> Blocked["Setup incomplete —<br/>route back to What-If Setup"]
+    Gate -- yes --> T["🎯 Target Section<br/>TargetSectionSelector.tsx"]
+    T --> Tag["🏷️ Tag Source<br/>TagSourcePanel.tsx<br/>POST .../tag-options"]
+    Tag --> Time["🕐 Timestamp & Baseline<br/>TimestampSelector.tsx + BaselineValuesPanel.tsx"]
+    Time --> Ov["🔧 Simulation Overrides<br/>SimulationOverridesPanel.tsx<br/>(invalid override → dropped, kept at baseline)"]
+    Ov --> Run(["🚀 Compute What-If Scenario<br/>POST /api/what-if/dashboard/compute"])
+    Run -- "constraint tripped" --> Warn["⚠️ Callout: constraint aborted the run"]
+    Run -- success --> KPI["📊 KPI Cards<br/>KpiCardsRow.tsx"]
+    KPI --> Table["📈 Actual vs Estimated<br/>ActualVsEstimatedTable.tsx (+ CSV export)"]
+    Table --> Val["🔍 Validation Filters<br/>ValidationFiltersPanel.tsx (collapsed)<br/>POST .../validation-filter"]
+```
+
 1. **🎯 Target Section** (`TargetSectionSelector.tsx`) — re-pickable here without redoing setup; scopes everything below to that section + upstream.
 2. **🏷️ Tag Source** (`TagSourcePanel.tsx`) — resolves via `POST /api/what-if/dashboard/tag-options`: `config` source (the `user inputs` sheet's tags, used as-is) or `wizard`/`historian` source (a `MultiSelectDropdown` to manually pick tags to override).
 3. **🕐 Timestamp & Baseline** — `TimestampSelector.tsx` (`GET /api/what-if/dashboard/dates` → `GET /api/what-if/dashboard/timestamps`, defaults to the most recent) + a collapsed `BaselineValuesPanel.tsx` (`GET /api/what-if/dashboard/baseline`, fetched only when expanded).
@@ -139,6 +207,32 @@ A single flowing page (deliberately not tabbed), gated behind `gateReady` (PI Ta
 ## 6. The engine's per-parameter dispatch (`src/whatif/engine.py::whatif_analysis()`)
 
 This is what actually runs on `POST /api/what-if/dashboard/compute`, called from `what_if_service.run_scenario()`:
+
+```mermaid
+flowchart TD
+    Start(["For each y_col,<br/>in topological execution order"]) --> Skip{"Plugin marks it<br/>SKIP_PARAMETERS?"}
+    Skip -- yes --> Next(["next parameter"])
+    Skip -- no --> Bump["Apply bump_linked_to_max constraint<br/>+ user overrides on raw inputs"]
+    Bump --> Owned{"Plugin-owned or<br/>'First principle'<br/>parameter?"}
+
+    Owned -- yes --> Sim["Run plugin SIMULATION /<br/>BULK_SIMULATION function<br/>(else: keep baseline)"]
+
+    Owned -- no --> SS{"whatif_model_selection<br/>has an entry for y_col<br/>(this case)?"}
+    SS -- "yes, and x_cols<br/>all present" --> SSPredict["predict_and_update_with_soft_sensor_model()<br/>load saved_models/&lt;case_id&gt;/, scale → predict → inverse-scale"]
+    SS -- "no selection, or<br/>LookupError" --> KF{"Results/&lt;case_id&gt;/Model/<br/>kalman_filter_model_{y_col}.pkl<br/>exists?"}
+    KF -- yes --> KFPredict["predict_and_update_with_kalman()<br/>step fitted filter, no measurement"]
+    KF -- "no, FileNotFoundError" --> Baseline["Keep baseline value<br/>(logged, never raised)"]
+
+    Sim --> Override
+    SSPredict --> Override
+    KFPredict --> Override
+    Baseline --> Override["Apply user override on this<br/>parameter's own value (wins over prediction)"]
+
+    Override --> Abort{"abort_if_exceeds<br/>constraint tripped?"}
+    Abort -- yes --> Stop(["Run stops here —<br/>value ← constraint Remark message,<br/>constraint_hit=true on response"])
+    Abort -- no --> Hooks["Fire plugin HOOKS['after:&lt;param&gt;']"]
+    Hooks --> Next
+```
 
 1. Load the plant physics plugin (`src/whatif/plants/yanpet_olf1_formulas.py`, auto-imported unless one is passed in) — declares `OWNED_PARAMETERS`, `SKIP_PARAMETERS`, `HOOKS`, `SIMULATION`/`BULK_SIMULATION`, `KPI_PARAMETERS`.
 2. Resolve the active scope: `filter_model_details_by_section()` restricts `Model details` rows to the Target Section + everything upstream (§4a's Section Order sheet).
@@ -165,6 +259,23 @@ This is what actually runs on `POST /api/what-if/dashboard/compute`, called from
 ## 7. Config persistence write path
 
 Every `commit_*` service function in `backend/app/services/what_if_service.py` (Section Order, PI Mapping, Model Mapping, MV/DV/CV, Constraints, User Inputs, Column Order, Target Section) does the same thing on save:
+
+```mermaid
+sequenceDiagram
+    participant UI as Section editor (e.g. ConstraintsEditor.tsx)
+    participant Route as PUT /api/what-if/config/<section>
+    participant Commit as commit_<section>() (what_if_service.py)
+    participant Disk as Config_file.xlsx (8 sheets)
+
+    UI->>Route: save this section's rows
+    Route->>Commit: commit_<section>(rows, case_id)
+    Commit->>Disk: _load_config() — current on-disk config (mtime-cached)
+    Commit->>Commit: _cfg_rows(cfg) — snapshot all 8 sheets
+    Commit->>Commit: replace only this one sheet with new rows
+    Commit->>Disk: _write_all_sheets() — atomic write, all 8 sheets
+    Disk-->>Route: ok
+    Route-->>UI: 200
+```
 
 1. Load the **current** on-disk config (`_load_config()`, mtime-cached).
 2. Snapshot all 8 sheets' current rows via `_cfg_rows(cfg)` (the same shape each `get_*` endpoint already returns).
