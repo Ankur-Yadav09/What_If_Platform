@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from backend.app.api.deps import require_valid_case_id
 from backend.app.schemas.overview import ClearSelectionRequest, OverviewResponse, SelectModelRequest
 from backend.app.services import overview_service
 
-router = APIRouter(tags=["overview"])
+router = APIRouter(tags=["overview"], dependencies=[Depends(require_valid_case_id)])
 
 
 @router.get("/overview", response_model=OverviewResponse)

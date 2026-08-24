@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from backend.app.api.deps import require_valid_case_id
 from backend.app.schemas.predict import PredictRequest, PredictResponse
 from backend.app.services.predict_service import run_predict
 
-router = APIRouter(tags=["predict"])
+router = APIRouter(tags=["predict"], dependencies=[Depends(require_valid_case_id)])
 
 
 @router.post("/predict", response_model=PredictResponse)

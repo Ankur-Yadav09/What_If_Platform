@@ -56,8 +56,8 @@ export function SectionOrderEditor({ onSaved }: SectionOrderEditorProps = {}) {
   return (
     <div>
       <p className="caption">
-        The plant's process-flow order (e.g. Furnace → Quench → CGC → PRC → ERC → Cold). This defines what "upstream"
-        means when a Target Section scopes a what-if run.
+        Plant sections in process order (e.g. Furnace → Quench → CGC → PRC → ERC → Cold) — defines "upstream" for
+        Target Section scoping below.
       </p>
       <table className="table-compact">
         <thead>

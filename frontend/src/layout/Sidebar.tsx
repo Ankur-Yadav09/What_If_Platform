@@ -20,12 +20,12 @@ function isGroup(entry: NavEntry): entry is NavGroup {
   return 'items' in entry
 }
 
-// This branch surfaces only the What-If Studio group — the Soft Sensor
-// Module's pages are still reachable via the routes in routes.tsx (they're
-// not deleted, just no longer given their own flat sidebar entries here:
-// Connect Data / Data Health / AI Feature Discovery / Build Model /
-// Experiment History are reused as horizontal tabs inside What-If Setup's
-// "Model Config" section instead — see ModelConfigTab.tsx).
+// This branch surfaces only the What-If Studio group — the former Soft
+// Sensor Module's standalone routes (their own sidebar-less entry points)
+// were removed from routes.tsx as dead code. The pages themselves are still
+// very much in use: Connect Data / Data Health / AI Feature Discovery /
+// Build Model / Experiment History are reused as horizontal tabs inside
+// What-If Setup's "Model Config" section instead — see ModelConfigTab.tsx.
 const NAV_ENTRIES: NavEntry[] = [
   { to: '/', label: 'Overview' },
   {

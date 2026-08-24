@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from backend.app.api.deps import require_valid_case_id
 from backend.app.jobs.manager import job_manager
 from backend.app.schemas.feature_selection import FeatureSelectionRequest, JobIdResponse
 from backend.app.services.feature_selection_service import run_feature_selection_job
 
-router = APIRouter(prefix="/feature-selection", tags=["feature-selection"])
+router = APIRouter(prefix="/feature-selection", tags=["feature-selection"], dependencies=[Depends(require_valid_case_id)])
 
 
 @router.post("/jobs", response_model=JobIdResponse, status_code=202)

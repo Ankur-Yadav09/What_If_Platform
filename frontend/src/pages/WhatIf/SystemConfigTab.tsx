@@ -83,10 +83,6 @@ export function SystemConfigTab({ onSaved }: SystemConfigTabProps = {}) {
           complete: processOrderComplete,
           content: (
             <div>
-              <p className="caption">
-                Enter plant sections in actual process order (e.g. Furnace → Quench → CGC → PRC → ERC → Cold), then
-                pick which section this case currently targets.
-              </p>
               <SectionOrderEditor onSaved={() => setTab(1)} />
               <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
                 <TargetSectionSelector value={targetSection} onChange={setTargetSection} />
@@ -142,10 +138,6 @@ export function SystemConfigTab({ onSaved }: SystemConfigTabProps = {}) {
           complete: (mvdvcvQuery.data ?? []).length > 0,
           content: (
             <div>
-              <p className="caption">
-                Optional: Manipulated/Disturbance/Controlled variable tags — prioritized as an input-tag source ahead
-                of the general PI Tag Mapping list when configuring model inputs.
-              </p>
               <MvDvCvTagListEditor
                 allowed={allowed}
                 sectionOptions={['', ...sectionOrderList]}

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 
+from backend.app.api.deps import require_valid_case_id
 from backend.app.schemas.preprocess import (
     ApplyPreprocessingRequest,
     ApplyPreprocessingResponse,
@@ -18,7 +19,7 @@ from backend.app.schemas.preprocess import (
 )
 from backend.app.services import preprocess_service, project_service
 
-router = APIRouter(tags=["preprocess"])
+router = APIRouter(tags=["preprocess"], dependencies=[Depends(require_valid_case_id)])
 
 
 @router.get("/preprocess/{dataset_name}/stats", response_model=FeatureStatsResponse)

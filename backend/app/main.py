@@ -48,6 +48,7 @@ app.include_router(feature_selection.router, prefix="/api")
 app.include_router(training.router, prefix="/api")
 app.include_router(predict.router, prefix="/api")
 app.include_router(what_if.router, prefix="/api")
+app.include_router(what_if.case_router, prefix="/api")
 
 
 @app.get("/api/health")

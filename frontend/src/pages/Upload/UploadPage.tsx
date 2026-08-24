@@ -73,9 +73,6 @@ export function UploadPage({ hideStepper, onContinue }: UploadPageProps = {}) {
               Continue to Data Health Assessment →
             </button>
             <button className="chip" onClick={handleUploadAnother}>Upload Another Dataset</button>
-            {!onContinue && (
-              <button className="chip" onClick={() => navigate('/soft-sensor-overview')}>← Back</button>
-            )}
           </div>
         </>
       )}

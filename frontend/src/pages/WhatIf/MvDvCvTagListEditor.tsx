@@ -81,8 +81,8 @@ export function MvDvCvTagListEditor({ allowed, sectionOptions, onSaved }: MvDvCv
   return (
     <div>
       <p className="caption">
-        Optional: Manipulated/Disturbance/Controlled variable tags, prioritized as an input-tag source for Model
-        Mapping ahead of the general PI Tag Mapping list.
+        Optional. Manipulated/Disturbance/Controlled variable tags — prioritized ahead of PI Tag Mapping as an
+        input-tag source for Model Mapping.
       </p>
       <div style={{ overflowX: 'auto' }}>
         <table className="table-compact">

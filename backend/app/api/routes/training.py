@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from backend.app.api.deps import require_valid_case_id
 from backend.app.jobs.manager import job_manager
 from backend.app.schemas.training import TrainingRequest
 from backend.app.services.training_service import prepare_training_job
 
-router = APIRouter(prefix="/training", tags=["training"])
+router = APIRouter(prefix="/training", tags=["training"], dependencies=[Depends(require_valid_case_id)])
 
 
 @router.post("/jobs", status_code=202)

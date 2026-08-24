@@ -23,6 +23,7 @@ run_per_target_auto_selection(X_df, y_df, top_k, enabled_methods,
 """
 from __future__ import annotations
 
+import logging
 import math
 import warnings
 from dataclasses import dataclass, field
@@ -65,6 +66,8 @@ from config.settings import (
 )
 
 warnings.filterwarnings("ignore")
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -299,6 +302,7 @@ def _compute_vif(X_clean: pd.DataFrame) -> pd.DataFrame:
             r2 = max(0.0, min(1 - ss_res / (ss_tot + 1e-12), 0.9999))
             vif = round(min(1.0 / (1.0 - r2), 9999.0), 2)
         except Exception:
+            logger.warning("VIF computation failed for feature %r; defaulting to 9999.0 (treated as High).", feat, exc_info=True)
             vif = 9999.0
 
         level = "High" if vif > _VIF_HIGH else "Moderate" if vif > _VIF_MODERATE else "Low"
@@ -382,6 +386,7 @@ def _m_target_correlation(
             per_target_scores=pts,
         )
     except Exception as e:
+        logger.exception("target_correlation method failed.")
         return _failed("target_correlation", names, top_k, str(e))
 
 
@@ -413,6 +418,7 @@ def _m_mutual_information(
             per_target_scores=pts,
         )
     except Exception as e:
+        logger.exception("mutual_information method failed.")
         return _failed("mutual_information", names, top_k, str(e))
 
 
@@ -457,6 +463,7 @@ def _m_elasticnet(
             per_target_scores=pts,
         )
     except Exception as e:
+        logger.exception("elasticnet method failed.")
         return _failed("elasticnet", names, top_k, str(e))
 
 
@@ -519,6 +526,7 @@ def _m_mrmr(
             notes=f"Greedy mRMR, MI relevance + MI redundancy, {y2.shape[1]} target(s)",
         )
     except Exception as e:
+        logger.exception("mrmr method failed.")
         return _failed("mrmr", names, top_k, str(e))
 
 
@@ -555,6 +563,7 @@ def _m_permutation_importance(
             notes=f"RF per target ({n_targets}), 5 repeats, mean importance",
         )
     except Exception as e:
+        logger.exception("permutation_importance method failed.")
         return _failed("permutation_importance", names, top_k, str(e))
 
 
@@ -797,6 +806,7 @@ def _compute_stability_score(
                         )
 
                 except Exception:
+                    logger.warning("A bootstrap-stability method call failed for this run; skipping it.", exc_info=True)
                     continue
 
             if len(method_results) < 3:
@@ -858,7 +868,7 @@ def _compute_stability_score(
         return result
 
     except Exception:
-
+        logger.exception("Stability score computation failed; returning a flat 50.0 fallback for every feature.")
         return {
             f: 50.0
             for f in features
@@ -1427,6 +1437,7 @@ def run_auto_feature_selection(
         try:
             result = method_dispatch[mid]()
         except Exception as exc:
+            logger.exception("Method '%s' failed during dispatch.", mid)
             result = _failed(mid, names, top_k, str(exc))
         method_results.append(result)
 

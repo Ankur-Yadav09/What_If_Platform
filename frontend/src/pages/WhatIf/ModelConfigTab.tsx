@@ -203,7 +203,7 @@ export function ModelConfigTab() {
       <div>
         <p className="caption">
           Active scope: {[...allowed].length ? sectionOrderList.filter((s) => allowed.has(s.toLowerCase())).join(', ') : 'all sections'}.
-          Maps each predicted parameter to its Section and the ordered input feature tags its Kalman model consumes.
+          {' '}"Configure Model →" pre-fills Feature Discovery/Build Model for that parameter; "Define Formula →" (First-Principle rows) is for typing a math expression instead.
           {modelMappingComplete && (
             <span className="pill active" style={{ marginLeft: '0.6rem' }}>
               ✓ Configured
@@ -214,12 +214,6 @@ export function ModelConfigTab() {
               {readyCount} of {dataModelRows.length} parameter(s) Model Ready
             </span>
           )}
-        </p>
-        <p className="caption">
-          Data-model rows get a "Configure Model →" action below that carries the Predicted Parameter straight into
-          AI Feature Discovery and Build Model — no need to pick the dataset or target variable again there.
-          First-Principle rows get a "Define Formula →" action instead, to type the math expression that computes
-          them; its referenced tags/parameters auto-fill this row's inputs.
         </p>
         <ModelMappingEditor
           allowed={allowed}

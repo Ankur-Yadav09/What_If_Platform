@@ -2,30 +2,44 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Query, UploadFile
+from fastapi import APIRouter, Depends, Query, UploadFile
 from fastapi.responses import Response
 
+from backend.app.api.deps import require_valid_case_id
 from backend.app.schemas import what_if as schemas
 from backend.app.services import what_if_service, whatif_case_service
 
-router = APIRouter(prefix="/what-if", tags=["what-if"])
+# Case CRUD lives on its own router, undecorated by require_valid_case_id:
+# cases_list/cases_create don't take a case_id at all, and cases_open takes
+# it as a *path* param (FastAPI won't let the same operation also read a
+# same-named Query param, which is what the dependency below does) — it's
+# already validated by whatif_case_service.open_case() -> database.get_case()
+# (404 if unknown), so nothing here is left unchecked.
+case_router = APIRouter(prefix="/what-if", tags=["what-if"])
+
+# Every other route in this file takes case_id via ?case_id=... and hands it
+# down to path construction (src/whatif/paths.py) or case-scoped persistence
+# lookups -- require_valid_case_id re-checks it against the whatif_cases
+# registry on every request, closing the path-traversal gap where
+# sanitize_case_id() only ever ran once, at case creation.
+router = APIRouter(prefix="/what-if", tags=["what-if"], dependencies=[Depends(require_valid_case_id)])
 
 
 # ---------------------------------------------------------------------------
 # Cases
 # ---------------------------------------------------------------------------
 
-@router.get("/cases", response_model=schemas.CasesListResponse)
+@case_router.get("/cases", response_model=schemas.CasesListResponse)
 def cases_list() -> schemas.CasesListResponse:
     return whatif_case_service.list_cases()
 
 
-@router.post("/cases", response_model=schemas.WhatIfCase)
+@case_router.post("/cases", response_model=schemas.WhatIfCase)
 def cases_create(body: schemas.CreateCaseRequest) -> schemas.WhatIfCase:
     return whatif_case_service.create_case(body)
 
 
-@router.post("/cases/{case_id}/open", response_model=schemas.WhatIfCase)
+@case_router.post("/cases/{case_id}/open", response_model=schemas.WhatIfCase)
 def cases_open(case_id: str) -> schemas.WhatIfCase:
     return whatif_case_service.open_case(case_id)
 

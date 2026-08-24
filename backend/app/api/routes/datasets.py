@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Form, Query, UploadFile
+from fastapi import APIRouter, Depends, Form, Query, UploadFile
 
+from backend.app.api.deps import require_valid_case_id
 from backend.app.schemas.datasets import DatasetListResponse, DatasetPreview, DatasetSummary
 from backend.app.services import dataset_service
 
-router = APIRouter(prefix="/datasets", tags=["datasets"])
+router = APIRouter(prefix="/datasets", tags=["datasets"], dependencies=[Depends(require_valid_case_id)])
 
 
 @router.post("/upload", response_model=DatasetSummary, status_code=201)
