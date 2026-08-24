@@ -64,13 +64,13 @@ export const ActualVsEstimatedTable = memo(function ActualVsEstimatedTable({ tim
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h3 style={{ marginBottom: 0 }}>📈 Actual vs Estimated Scenario Output</h3>
+        <h3 style={{ marginBottom: 0 }}>Actual vs Estimated Scenario Output</h3>
         {rows.length > 8 && (
           <input
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="🔍 Filter parameters…"
+            placeholder="Filter parameters…"
             style={{ maxWidth: 240 }}
           />
         )}
@@ -105,7 +105,7 @@ export const ActualVsEstimatedTable = memo(function ActualVsEstimatedTable({ tim
         emptyMessage={`No parameters match "${filter}".`}
       />
       <button className="chip" style={{ marginTop: '1rem' }} onClick={exportCsv}>
-        📥 Export Baseline vs Simulation Matrix (.CSV)
+        Export Baseline vs Simulation Matrix (.CSV)
       </button>
     </div>
   )

@@ -92,7 +92,6 @@ export function DashboardPage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <SectionBanner
-          icon="📊"
           title="What-If Analysis"
           subtitle="Simulate hypothetical process scenarios against your configured predictive models."
         />
@@ -114,7 +113,6 @@ export function DashboardPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <SectionBanner
-        icon="📊"
         title="What-If Analysis"
         subtitle="Simulate hypothetical process scenarios against your configured predictive models."
       />
@@ -131,7 +129,7 @@ export function DashboardPage() {
         }}
       >
         <div className="card" style={{ padding: '1.25rem 1.5rem' }}>
-          <h3 style={{ marginTop: 0 }}>🎯 Target Section</h3>
+          <h3 style={{ marginTop: 0 }}>Target Section</h3>
           <TargetSectionSelector value={targetSection} onChange={setTargetSection} />
         </div>
 
@@ -143,13 +141,13 @@ export function DashboardPage() {
             below), so the card is worth showing only then. */}
         {tagOptionsQuery.data && tagOptionsQuery.data.source !== 'config' && (
           <div className="card" style={{ padding: '1.25rem 1.5rem' }}>
-            <h3 style={{ marginTop: 0 }}>🏷️ Tag Source</h3>
+            <h3 style={{ marginTop: 0 }}>Tag Source</h3>
             <TagSourcePanel tagOptions={tagOptionsQuery.data} selectedTags={manualTags} onChange={setManualTags} />
           </div>
         )}
 
         <div className="card" style={{ padding: '1.25rem 1.5rem' }}>
-          <h3 style={{ marginTop: 0 }}>🕐 Baseline Process Snapshot</h3>
+          <h3 style={{ marginTop: 0 }}>Baseline Process Snapshot</h3>
           <TimestampSelector
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
@@ -176,7 +174,7 @@ export function DashboardPage() {
           <button disabled={!selectedTimestamp || scenarioMutation.isPending} onClick={runCompute}>
             {scenarioMutation.isPending
               ? 'Processing…'
-              : `🚀 Compute What-If Scenario (${nOverrides} override${nOverrides === 1 ? '' : 's'} active)`}
+              : `Compute What-If Scenario (${nOverrides} override${nOverrides === 1 ? '' : 's'} active)`}
           </button>
           {!selectedTimestamp && <span className="caption">Pick an Available Snapshot Time above first.</span>}
         </div>

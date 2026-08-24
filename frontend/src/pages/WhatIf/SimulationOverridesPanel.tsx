@@ -26,7 +26,7 @@ export function SimulationOverridesPanel({ tags, limits, overrides, onChange, on
   if (tags.length === 0) {
     return (
       <div className="card" style={{ padding: '1.5rem' }}>
-        <h3 style={{ marginTop: 0 }}>🔧 Simulation Overrides</h3>
+        <h3 style={{ marginTop: 0 }}>Simulation Overrides</h3>
         <p className="caption">Pick one or more tags in Tag Source above to override their value for this run.</p>
       </div>
     )
@@ -41,7 +41,7 @@ export function SimulationOverridesPanel({ tags, limits, overrides, onChange, on
     <div className="card" style={{ padding: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h3 style={{ marginTop: 0 }}>
-          🔧 Simulation Overrides
+          Simulation Overrides
           {activeCount > 0 && (
             <span className="caption" style={{ fontWeight: 500, marginLeft: '0.5rem' }}>
               ({activeCount} of {tags.length} active)
@@ -61,7 +61,7 @@ export function SimulationOverridesPanel({ tags, limits, overrides, onChange, on
           type="text"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="🔍 Filter tags by name…"
+          placeholder="Filter tags by name…"
           style={{ width: '100%', maxWidth: 360, marginTop: '0.75rem' }}
         />
       )}
