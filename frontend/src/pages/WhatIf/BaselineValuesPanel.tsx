@@ -31,7 +31,7 @@ export const BaselineValuesPanel = memo(function BaselineValuesPanel({ timestamp
   return (
     <div>
       <button className="chip" onClick={() => setOpen((o) => !o)}>
-        {open ? '▲' : '▼'} 🔎 Baseline Process Values at Selected Timestamp
+        {open ? '▲' : '▼'} Baseline Process Values at Selected Timestamp
       </button>
       {open && (
         <div style={{ marginTop: '0.75rem' }}>

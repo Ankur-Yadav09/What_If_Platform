@@ -31,7 +31,7 @@ export function TargetSectionSelector({ value, onChange }: TargetSectionSelector
   return (
     <div>
       <label className="caption" style={{ display: 'block', marginBottom: '0.4rem' }}>
-        🎯 Target Section (compute this section and everything upstream of it)
+        Target Section (compute this section and everything upstream of it)
       </label>
       <select value={active} onChange={(e) => onChange(e.target.value)} style={{ minWidth: 220 }}>
         {sectionOrder.map((s) => (

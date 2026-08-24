@@ -168,7 +168,7 @@ export function TimestampSelector({
           }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-            🗓️ {displayLabel}
+            {displayLabel}
           </span>
           <span style={{ color: 'var(--text-caption)' }}>{open ? '▲' : '▼'}</span>
         </div>

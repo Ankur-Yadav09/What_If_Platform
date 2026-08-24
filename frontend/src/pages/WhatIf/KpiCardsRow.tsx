@@ -11,20 +11,6 @@ function statusFor(change: number): { text: string; bg: string; glyph: string } 
   return { text: 'var(--text-caption)', bg: 'var(--bg-subtle)', glyph: '–' }
 }
 
-// A little keyword-matched variety instead of the same tag emoji on every
-// single card — cheap, but it gives the eye something to key on while
-// scanning a grid of a dozen-plus tiles.
-function iconFor(tag: string): string {
-  const t = tag.toLowerCase()
-  if (t.includes('temp')) return '🌡️'
-  if (t.includes('pressure') || /(^|_)pres(_|$)/.test(t)) return '🧭'
-  if (t.includes('flow')) return '💧'
-  if (t.includes('power') || /(^|_)kw(_|$)/.test(t)) return '⚡'
-  if (t.includes('speed') || t.includes('rpm')) return '⚙️'
-  if (t.includes('loss')) return '📉'
-  return '🏷️'
-}
-
 function WhatIfKpiCard({ kpi }: { kpi: WhatIfKpi }) {
   const status = statusFor(kpi.change)
   return (
@@ -52,7 +38,7 @@ function WhatIfKpiCard({ kpi }: { kpi: WhatIfKpi }) {
           minHeight: '2em',
         }}
       >
-        {iconFor(kpi.tag)} {kpi.tag.replace(/_/g, ' ')}
+        {kpi.tag.replace(/_/g, ' ')}
       </div>
       <div className="metric-value" style={{ fontSize: '1.15rem' }}>
         {formatMetric(kpi.estimated)}
@@ -105,14 +91,14 @@ export const KpiCardsRow = memo(function KpiCardsRow({ kpis }: { kpis: WhatIfKpi
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <button className="chip" onClick={() => setOpen((o) => !o)}>
-          {open ? '▲' : '▼'} 📊 Key Performance Indicators ({kpis.length})
+          {open ? '▲' : '▼'} Key Performance Indicators ({kpis.length})
         </button>
         {open && kpis.length > 8 && (
           <input
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="🔍 Filter KPIs…"
+            placeholder="Filter KPIs…"
             style={{ maxWidth: 240 }}
           />
         )}

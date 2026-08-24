@@ -82,13 +82,13 @@ const ValidationResultsTable = memo(function ValidationResultsTable({
   return (
     <div style={{ marginTop: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h4 style={{ margin: 0 }}>🔍 Correlated Historical Validation Sets</h4>
+        <h4 style={{ margin: 0 }}>Correlated Historical Validation Sets</h4>
         {allTags.length > 6 && (
           <input
             type="text"
             value={tagFilter}
             onChange={(e) => setTagFilter(e.target.value)}
-            placeholder="🔍 Find a tag column…"
+            placeholder="Find a tag column…"
             style={{ maxWidth: 240 }}
           />
         )}
@@ -120,7 +120,7 @@ const ValidationResultsTable = memo(function ValidationResultsTable({
         maxVisibleRows={8}
       />
       <button className="chip" style={{ marginTop: '1rem' }} onClick={exportCsv}>
-        📥 Export Unified Comparison &amp; Historical Validation Data (.CSV)
+        Export Unified Comparison &amp; Historical Validation Data (.CSV)
       </button>
     </div>
   )
@@ -199,7 +199,7 @@ export const ValidationFiltersPanel = memo(function ValidationFiltersPanel({ tim
   return (
     <details className="card" style={{ padding: '1.5rem' }}>
       <summary style={{ cursor: 'pointer', fontWeight: 700, fontSize: '1.05rem' }}>
-        🔍 Validation Filters — compare this scenario against similar historical snapshots (optional)
+        Validation Filters — compare this scenario against similar historical snapshots (optional)
       </summary>
       <div style={{ marginTop: '1rem' }}>
         {allQuery.isLoading ? (

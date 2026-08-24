@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys, json, re\ndata = json.load(sys.stdin)\ncmd = data.get('tool_input', {}).get('command', '')\ndangerous = r'(rm\\s|rm-|unlink\\s|truncate\\s|git clean)'\ndistinctive = r'(dashboard\\.db|mlflow\\.db|\\.env\\b|saved_models)'\ngeneric = r'(?:^|[\\\\/\\s\\x22\\x27])(Results|Data)(?:[\\\\/\\s\\x22\\x27]|\\$)'\nprotected = f'(?:{distinctive}|{generic})'\npattern = re.compile(rf'{dangerous}[\\s\\S]{{0,80}}{protected}|{protected}[\\s\\S]{{0,80}}{dangerous}')\nif pattern.search(cmd):\n    sys.stderr.write('BLOCKED: destructive command appears to target a protected path (dashboard.db / mlflow.db / .env / saved_models / Results / Data). Ask the user before removing this directly.\\n')\n    sys.exit(2)\n\""
+          }
+        ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys, json, re\ndata = json.load(sys.stdin)\ncmd = data.get('tool_input', {}).get('command', '')\ndangerous = r'(Remove-Item|rm\\s|del\\s|rd\\s)'\ndistinctive = r'(dashboard\\.db|mlflow\\.db|\\.env\\b|saved_models)'\ngeneric = r'(?:^|[\\\\/\\s\\x22\\x27])(Results|Data)(?:[\\\\/\\s\\x22\\x27]|\\$)'\nprotected = f'(?:{distinctive}|{generic})'\npattern = re.compile(rf'{dangerous}[\\s\\S]{{0,80}}{protected}|{protected}[\\s\\S]{{0,80}}{dangerous}')\nif pattern.search(cmd):\n    sys.stderr.write('BLOCKED: destructive command appears to target a protected path (dashboard.db / mlflow.db / .env / saved_models / Results / Data). Ask the user before removing this directly.\\n')\n    sys.exit(2)\n\""
+          }
+        ]
+      }
+    ]
+  }
+}

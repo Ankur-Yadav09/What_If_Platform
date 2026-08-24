@@ -9,9 +9,9 @@ interface TagSourcePanelProps {
 }
 
 const SOURCE_LABEL: Record<string, string> = {
-  wizard: '⚡ Tag Source: Wizard Mapping',
-  config: '📋 Tag Source: Config Sheet',
-  historian: '🏷️ Dynamic Tag Selection',
+  wizard: 'Tag Source: Wizard Mapping',
+  config: 'Tag Source: Config Sheet',
+  historian: 'Dynamic Tag Selection',
 }
 
 // Memoized alongside ActualVsEstimatedTable/ValidationFiltersPanel — see
