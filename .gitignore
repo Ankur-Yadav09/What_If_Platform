@@ -24,3 +24,5 @@ artifacts/
 /Data
 /mockups
 /Scripts/dashboard.db
+
+.env
