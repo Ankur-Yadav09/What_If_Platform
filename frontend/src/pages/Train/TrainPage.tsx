@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { listProjects } from '../../api/preprocess'
 import { submitTraining } from '../../api/training'
 import { Callout } from '../../components/Callout'
@@ -29,16 +28,15 @@ interface TrainPageProps {
   // See UploadPage's hideStepper for why: avoids a duplicate progress
   // indicator when this page is embedded inside What-If Studio's tabs.
   hideStepper?: boolean
-  // See UploadPage's onContinue for why: when embedded, "Continue" must stay
-  // inside What-If Studio (Experimentation & Model Selection) instead of
-  // navigating to the standalone /predict route, which isn't part of the
-  // What-If Studio module at all.
-  onContinue?: () => void
+  // TrainPage is only ever rendered embedded inside What-If Studio's Model
+  // Config tab now — "Continue" always stays inside What-If Studio
+  // (Experimentation & Model Selection), so this is required, not a
+  // fallback path.
+  onContinue: () => void
   guided?: GuidedTrainProps
 }
 
-export function TrainPage({ hideStepper, onContinue, guided }: TrainPageProps = {}) {
-  const navigate = useNavigate()
+export function TrainPage({ hideStepper, onContinue, guided }: TrainPageProps) {
   const queryClient = useQueryClient()
   const { activeProject: projectId, setActiveProject: setProjectId } = useActiveProject()
   const [algorithm, setAlgorithm] = useState<string>('DAE')
@@ -261,11 +259,8 @@ export function TrainPage({ hideStepper, onContinue, guided }: TrainPageProps = 
               </button>
             </div>
           ) : (
-            <button
-              style={{ marginTop: '1.25rem' }}
-              onClick={() => (onContinue ? onContinue() : navigate('/predict'))}
-            >
-              {onContinue ? 'Continue to Experimentation & Model Selection →' : 'Continue to Predict →'}
+            <button style={{ marginTop: '1.25rem' }} onClick={onContinue}>
+              Continue to Experimentation & Model Selection →
             </button>
           )}
         </div>

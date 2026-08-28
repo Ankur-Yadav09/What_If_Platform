@@ -57,7 +57,7 @@ Soft_Sensor_and_What_If_Platform/
 ├── backend/                # FastAPI app
 │   └── app/
 │       ├── main.py         # App entry point, CORS, router registration
-│       ├── api/routes/     # One router per feature area (datasets, preprocess, feature_selection, training, predict, overview, jobs, what_if)
+│       ├── api/routes/     # One router per feature area (datasets, preprocess, feature_selection, training, jobs, what_if)
 │       ├── services/       # Business logic — wraps src/ for the API layer
 │       ├── schemas/        # Pydantic request/response models
 │       ├── jobs/           # Background job manager (polling-based long-running tasks)
@@ -70,7 +70,7 @@ Soft_Sensor_and_What_If_Platform/
 │       │   ├── Upload/, Preprocess/, FeatureSelection/, Train/   # Model-development pipeline pages — reused verbatim as tabs inside What-If Studio's Model Config; their old standalone routes (and the unused Predict/ page) were removed as dead code
 │       │   └── WhatIf/          # What-If Studio: Welcome (OverviewPage.tsx), What-If Setup (WhatIfSetupPage.tsx → SystemConfigTab/ModelConfigTab/WhatIfConfigTab), What-If Analysis (DashboardPage.tsx) + their sub-components
 │       ├── components/      # Shared UI components (tables, charts, stepper, etc.) — no UI/chart library, all hand-rolled
-│       ├── api/             # Axios client + typed API calls (one file per backend domain, incl. whatIf.ts, overview.ts, cases.ts) — client.ts auto-attaches the active case_id to every What-If/Soft-Sensor request
+│       ├── api/             # Axios client + typed API calls (one file per backend domain, incl. whatIf.ts, cases.ts) — client.ts auto-attaches the active case_id to every What-If/Soft-Sensor request
 │       └── state/           # React context for active dataset/project/What-If target section/active case
 ├── src/                     # Framework-agnostic core logic (imported by the backend, no FastAPI/React/Streamlit imports)
 │   ├── data/                # SQLite dataset versioning + preprocessing pipeline + model_registry + whatif_model_selection (case-scoped, see flow.md) + whatif_cases (case registry)

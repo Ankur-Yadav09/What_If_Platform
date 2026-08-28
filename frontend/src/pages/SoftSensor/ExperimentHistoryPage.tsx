@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { clearModelSelection, deleteModel, getOverview, selectModelForParameter } from '../../api/overview'
+import { clearModelSelection, deleteModel, getOverview, selectModelForParameter } from '../../api/whatIf'
 import { Callout } from '../../components/Callout'
 import type { SavedModelSummary } from '../../api/types'
 

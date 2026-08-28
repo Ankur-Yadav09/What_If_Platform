@@ -166,14 +166,6 @@ export interface TrainingResult {
   val_pred_losses: number[]
 }
 
-export interface PredictResult {
-  x_cols: string[]
-  y_cols: string[]
-  rows: Record<string, unknown>[]
-  has_actuals: boolean
-  metrics: Record<string, unknown>[] | null
-}
-
 // ---------------------------------------------------------------------------
 // What-If Analysis module
 // ---------------------------------------------------------------------------

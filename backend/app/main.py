@@ -15,8 +15,6 @@ from backend.app.api.routes import (
     datasets,
     feature_selection,
     jobs,
-    overview,
-    predict,
     preprocess,
     training,
     what_if,
@@ -40,13 +38,11 @@ def _startup() -> None:
     init_db()
 
 
-app.include_router(overview.router, prefix="/api")
 app.include_router(datasets.router, prefix="/api")
 app.include_router(jobs.router, prefix="/api")
 app.include_router(preprocess.router, prefix="/api")
 app.include_router(feature_selection.router, prefix="/api")
 app.include_router(training.router, prefix="/api")
-app.include_router(predict.router, prefix="/api")
 app.include_router(what_if.router, prefix="/api")
 app.include_router(what_if.case_router, prefix="/api")
 

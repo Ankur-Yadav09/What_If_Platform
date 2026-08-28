@@ -12,7 +12,7 @@ export const apiClient = axios.create({ baseURL: '/api' })
 // reading straight from localStorage (not useActiveCase()) since this
 // interceptor runs outside React and must stay in sync with whatever the
 // active case is at request time, including on the very first render.
-const CASE_SCOPED_URL_PREFIX = /^\/(what-if|overview|training|predict|datasets|preprocess|projects|feature-selection)(\/|$)/
+const CASE_SCOPED_URL_PREFIX = /^\/(what-if|training|datasets|preprocess|projects|feature-selection)(\/|$)/
 
 apiClient.interceptors.request.use((config) => {
   if (config.url && CASE_SCOPED_URL_PREFIX.test(config.url)) {

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { WorkflowStepper } from '../../components/WorkflowStepper'
 import { useActiveDataset } from '../../state/ActiveDatasetContext'
 import { AIRecommendationCard } from './AIRecommendationCard'
@@ -15,16 +14,13 @@ interface UploadPageProps {
   // Connect Data -> ... progression via their own tab bar — showing both
   // stacked on top of each other reads as two conflicting progress trackers.
   hideStepper?: boolean
-  // When embedded inside What-If Studio's Model Development, "Continue"
-  // must move to the next in-page phase (Data Health) instead of navigating
-  // to the standalone /preprocess route — routing away landed the user on a
-  // completely different, un-embedded page, which read as broken/inconsistent
-  // next to every other step staying in place. Omit for standalone use.
-  onContinue?: () => void
+  // UploadPage is only ever rendered embedded inside What-If Studio's Model
+  // Config tab now — "Continue" always moves to the next in-page phase
+  // (Data Health), so this is required, not a fallback path.
+  onContinue: () => void
 }
 
-export function UploadPage({ hideStepper, onContinue }: UploadPageProps = {}) {
-  const navigate = useNavigate()
+export function UploadPage({ hideStepper, onContinue }: UploadPageProps) {
   const [tab, setTab] = useState<SourceTab>('existing')
   const { activeDataset: selectedName, setActiveDataset: setSelectedName } = useActiveDataset()
 
@@ -69,9 +65,7 @@ export function UploadPage({ hideStepper, onContinue }: UploadPageProps = {}) {
           <AIRecommendationCard datasetName={selectedName} />
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={() => (onContinue ? onContinue() : navigate('/preprocess'))}>
-              Continue to Data Health Assessment →
-            </button>
+            <button onClick={onContinue}>Continue to Data Health Assessment →</button>
             <button className="chip" onClick={handleUploadAnother}>Upload Another Dataset</button>
           </div>
         </>

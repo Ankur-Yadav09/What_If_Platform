@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { applyPreprocessing } from '../../api/preprocess'
 import { Callout } from '../../components/Callout'
 import { SectionBanner } from '../../components/SectionBanner'
@@ -10,20 +9,17 @@ interface FinalApplyProps {
   datasetName: string
   xCols: string[]
   yCols: string[]
-  /** When set, "Continue" advances the embedding page's own flow instead of
-   * navigating to the standalone Soft Sensor /train route — used when this
-   * component is reused inside What-If Studio's "AI Feature Discovery"
-   * phase (see ModelConfigTab.tsx), where leaving to /train would land on
-   * the full standalone Train/Predict module (Live Prediction tab and all)
-   * instead of staying in the embedded Model Development flow. */
-  onContinue?: () => void
+  /** FinalApply is only ever rendered embedded inside What-If Studio's
+   * "AI Feature Discovery" phase (via FeatureSelectionPage, see
+   * ModelConfigTab.tsx) — "Continue" always advances the embedding page's
+   * own flow, so this is required, not a fallback path. */
+  onContinue: () => void
 }
 
 const SPLIT_METHODS = ['Random Split', 'Stratified Split', 'Sequential Split']
 
 export function FinalApply({ datasetName, xCols, yCols, onContinue }: FinalApplyProps) {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
   const { setActiveProject } = useActiveProject()
   const [imputationMethod, setImputationMethod] = useState('Median')
   const [splitMethod, setSplitMethod] = useState('Random Split')
@@ -119,8 +115,8 @@ export function FinalApply({ datasetName, xCols, yCols, onContinue }: FinalApply
             Y target(s). Created project <code>{applyMutation.data.project_id}</code> — {applyMutation.data.n_train}{' '}
             train rows / {applyMutation.data.n_test} test rows.
           </Callout>
-          <button style={{ alignSelf: 'flex-start' }} onClick={() => (onContinue ? onContinue() : navigate('/train'))}>
-            {onContinue ? 'Continue to Build Model →' : 'Continue to Train Model →'}
+          <button style={{ alignSelf: 'flex-start' }} onClick={onContinue}>
+            Continue to Build Model →
           </button>
         </div>
       )}

@@ -1,0 +1,311 @@
+<title>Complete Architecture Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#e7ebef; --bg-panel:#f6f8fa; --bg-grid:#c7d0d9;
+    --ink:#16212e; --ink-soft:#51606e; --line:#b7c2cc;
+    --accent-amber:#a8641a; --accent-amber-bg:#f4e3c8;
+    --accent-teal:#276e68; --accent-teal-bg:#dcece9;
+    --code-bg:#dee5eb; --shadow:rgba(22,33,46,0.10);
+    --font-display:'Big Shoulders', 'Arial Narrow', sans-serif;
+    --font-body:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e141b; --bg-panel:#161d26; --bg-grid:#223040;
+      --ink:#dce4ec; --ink-soft:#8fa0af; --line:#2b3846;
+      --accent-amber:#e8a33d; --accent-amber-bg:#3a2c14;
+      --accent-teal:#57c2b8; --accent-teal-bg:#16302c;
+      --code-bg:#1b2430; --shadow:rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e141b; --bg-panel:#161d26; --bg-grid:#223040;
+    --ink:#dce4ec; --ink-soft:#8fa0af; --line:#2b3846;
+    --accent-amber:#e8a33d; --accent-amber-bg:#3a2c14;
+    --accent-teal:#57c2b8; --accent-teal-bg:#16302c;
+    --code-bg:#1b2430; --shadow:rgba(0,0,0,0.4);
+  }
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0 / 100% 42px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0 / 42px 100%,
+      var(--bg);
+    color:var(--ink); font-family:var(--font-body); line-height:1.6;
+  }
+  .page{
+    max-width:1500px; margin:0 auto;
+    padding:clamp(1.5rem,4vw,3.5rem) clamp(1rem,4vw,1.5rem) 4rem;
+    display:flex; flex-direction:column; gap:clamp(2rem,4vw,2.75rem);
+  }
+  header.hero{ display:flex; flex-direction:column; gap:0.9rem; padding-bottom:1.75rem; border-bottom:2px solid var(--line); }
+  .eyebrow{ font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-soft); }
+  h1{ font-family:var(--font-display); font-weight:800; font-size:clamp(2.3rem,6vw,3.6rem); line-height:0.96; text-wrap:balance; margin:0; color:var(--ink); }
+  .dek{ font-size:1.02rem; color:var(--ink-soft); max-width:80ch; margin:0; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:1.25rem 2rem; font-family:var(--font-mono); font-size:0.76rem; color:var(--ink-soft); align-items:center; }
+  .legend .key{ display:flex; align-items:center; gap:0.5rem; }
+  .legend svg{ width:34px; height:10px; flex-shrink:0; }
+
+  section.panel{
+    position:relative; background:var(--bg-panel); border:1px solid var(--line); border-radius:5px;
+    box-shadow:0 8px 22px -12px var(--shadow);
+    padding:clamp(1.5rem,4vw,2.25rem) clamp(1.1rem,4vw,2rem) clamp(1.75rem,4vw,2.25rem);
+    display:flex; flex-direction:column; gap:1rem;
+  }
+  .tag{
+    position:absolute; top:-13px; left:1.5rem; background:var(--bg-panel); border:1px solid var(--line);
+    padding:0.15rem 0.6rem; font-family:var(--font-mono); font-size:0.68rem;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); border-radius:3px;
+  }
+  h2{ font-family:var(--font-display); font-weight:700; font-size:clamp(1.4rem,3.6vw,1.8rem); margin:0.2rem 0 0; color:var(--ink); text-wrap:balance; }
+  section.panel > p{ max-width:80ch; margin:0; color:var(--ink); }
+  section.panel > p.sub{ color:var(--ink-soft); margin-top:-0.4rem; }
+
+  figure{ margin:0.4rem 0 0; }
+  figure .frame{ overflow-x:auto; background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:1rem clamp(0.75rem,2vw,1.5rem); }
+  figure svg{ display:block; width:100%; height:auto; max-width:100%; }
+  figcaption{ margin-top:0.7rem; font-size:0.92rem; color:var(--ink-soft); max-width:80ch; }
+  figcaption code{ font-family:var(--font-mono); background:var(--code-bg); padding:0.1rem 0.35rem; border-radius:3px; font-size:0.86em; }
+
+  dl.stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:1rem 1.5rem; margin:0; padding:0; }
+  dl.stats div{ display:flex; flex-direction:column; gap:0.15rem; }
+  dl.stats dt{ font-family:var(--font-display); font-weight:800; font-size:1.9rem; color:var(--accent-amber); line-height:1; }
+  dl.stats dd{ margin:0; font-family:var(--font-mono); font-size:0.74rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-soft); }
+
+  footer{
+    font-family:var(--font-mono); font-size:0.75rem; color:var(--ink-soft);
+    border-top:1px solid var(--line); padding-top:1.25rem;
+    display:flex; flex-wrap:wrap; gap:0.4rem 1.5rem;
+  }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">SoftSense AI — field reference, third of three (with the Blueprint and the Wiring Guide)</span>
+    <h1>Complete Architecture Map</h1>
+    <p class="dek">The whole system on one page: every layer, every backend router, every <code>src/</code> module, both persistence worlds, the one bridge between them, and how <code>case_id</code> threads through all four. The Blueprint zooms into specific mechanisms; the Wiring Guide maps every UI action to its code; this is the inventory that ties both together.</p>
+  </header>
+
+  <dl class="stats">
+    <div><dt>4</dt><dd>code layers</dd></div>
+    <div><dt>6</dt><dd>backend routers</dd></div>
+    <div><dt>2</dt><dd>persistence worlds</dd></div>
+    <div><dt>1</dt><dd>deliberate bridge</dd></div>
+    <div><dt>1</dt><dd>async job pattern</dd></div>
+  </dl>
+
+  <div class="legend">
+    <span class="key"><svg viewBox="0 0 34 10" role="img" aria-label="Solid amber line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--accent-amber)" stroke-width="2.5"/></svg> primary path / owns</span>
+    <span class="key"><svg viewBox="0 0 34 10" role="img" aria-label="Teal dashed line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="5 4"/></svg> fallback / secondary</span>
+    <span class="key"><svg viewBox="0 0 34 10" role="img" aria-label="Solid ink line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--ink)" stroke-width="2"/></svg> structural flow</span>
+    <span class="key"><svg viewBox="0 0 34 10" role="img" aria-label="Dotted line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--ink-soft)" stroke-width="2" stroke-dasharray="1 3"/></svg> case_id spine</span>
+  </div>
+
+  <section class="panel">
+    <span class="tag">The map</span>
+    <h2>Four layers, top to bottom</h2>
+    <p class="sub">One import direction throughout — <code>src/</code> never knows a browser or a web framework exists. Reused/embedded pages have no sidebar entry of their own; every backend route still resolves through the same four hops. The case_id spine on the right shows the same value being threaded through every layer, not four different mechanisms.</p>
+
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 1400 1200" role="img" aria-label="Complete system map: the Frontend band shows What-If Studio's pages and the embedded pipeline pages sharing one api layer; the Backend band shows six FastAPI routers with what_if.py as the largest, plus the background job manager; the Core band shows the two src/ module groups; the Persistence band shows the two separate storage worlds joined by exactly one bridge table. A dashed case_id spine runs down the right side showing how the same case identifier threads through all four layers.">
+          <defs>
+            <marker id="arrow-amber-f" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-amber)"/></marker>
+            <marker id="arrow-teal-f" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-teal)"/></marker>
+            <marker id="arrow-ink-f" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+          </defs>
+
+          <!-- ============ BAND 1: FRONTEND ============ -->
+          <rect x="20" y="20" width="1360" height="270" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="40" y="45" font-family="var(--font-mono)" font-size="12.5" letter-spacing="0.05em" fill="var(--ink-soft)">FRONTEND — frontend/src/ (React + TypeScript + Vite, dev server :5173)</text>
+
+          <rect x="50" y="60" width="1300" height="95" rx="5" fill="none" stroke="var(--line)" stroke-width="1.25" stroke-dasharray="3 4"/>
+          <text x="70" y="80" font-family="var(--font-body)" font-size="12" fill="var(--ink-soft)">What-If Studio — the product (sidebar entries)</text>
+
+          <g font-family="var(--font-mono)" font-size="12">
+            <rect x="70" y="90" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="187" y="112" text-anchor="middle" fill="var(--ink)">Welcome</text>
+            <text x="187" y="128" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">+ New / Switch Case</text>
+
+            <rect x="330" y="90" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="447" y="112" text-anchor="middle" fill="var(--ink)">System Config</text>
+            <text x="447" y="128" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">Flow · PI Tags · Input Tags</text>
+
+            <rect x="590" y="90" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="707" y="112" text-anchor="middle" fill="var(--ink)">Model Config</text>
+            <text x="707" y="128" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">dev pipeline + Experiments</text>
+
+            <rect x="850" y="90" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="967" y="112" text-anchor="middle" fill="var(--ink)">What-If Config</text>
+            <text x="967" y="128" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">Constraints · Inputs · Layout</text>
+
+            <rect x="1110" y="90" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="1227" y="112" text-anchor="middle" fill="var(--ink)">What-If Analysis</text>
+            <text x="1227" y="128" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">Compute — Blueprint Fig. 03</text>
+          </g>
+
+          <rect x="50" y="165" width="1300" height="95" rx="5" fill="none" stroke="var(--line)" stroke-width="1.25" stroke-dasharray="3 4"/>
+          <text x="70" y="185" font-family="var(--font-body)" font-size="12" fill="var(--ink-soft)">Embedded pipeline — reused verbatim inside Model Config, no sidebar entry of its own</text>
+
+          <g font-family="var(--font-mono)" font-size="12">
+            <rect x="70" y="195" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="187" y="217" text-anchor="middle" fill="var(--ink)">Upload</text>
+            <text x="187" y="233" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">Connect Data</text>
+
+            <rect x="330" y="195" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="447" y="217" text-anchor="middle" fill="var(--ink)">Preprocess</text>
+            <text x="447" y="233" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">Data Health</text>
+
+            <rect x="590" y="195" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="707" y="217" text-anchor="middle" fill="var(--ink)">FeatureSelection</text>
+            <text x="707" y="233" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">AI Feature Discovery</text>
+
+            <rect x="850" y="195" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="967" y="217" text-anchor="middle" fill="var(--ink)">Train</text>
+            <text x="967" y="233" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">Build Model — Fig. 05</text>
+
+            <rect x="1110" y="195" width="235" height="55" rx="4" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="1227" y="217" text-anchor="middle" fill="var(--ink)">ExperimentHistory</text>
+            <text x="1227" y="233" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">Model Selection — bridge</text>
+          </g>
+
+          <text x="700" y="280" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink-soft)">api/*.ts (one file per backend domain) → client.ts — CASE_SCOPED_URL_PREFIX stamps ?case_id=...</text>
+
+          <line x1="700" y1="290" x2="700" y2="326" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-f)"/>
+          <text x="716" y="312" font-family="var(--font-mono)" font-size="11" fill="var(--ink-soft)">HTTP via axios — /api/*</text>
+
+          <!-- ============ BAND 2: BACKEND ============ -->
+          <rect x="20" y="330" width="1360" height="190" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="40" y="355" font-family="var(--font-mono)" font-size="12.5" letter-spacing="0.05em" fill="var(--ink-soft)">BACKEND — backend/app/ (FastAPI, :8010) — routes → schemas → services</text>
+
+          <rect x="50" y="375" width="300" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--accent-amber)" stroke-width="2.25"/>
+          <text x="200" y="398" text-anchor="middle" font-family="var(--font-mono)" font-size="13" fill="var(--ink)">what_if.py</text>
+          <text x="200" y="414" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">+ case_router</text>
+          <text x="200" y="429" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--accent-amber)">config · dashboard · experiments · cases</text>
+
+          <g font-family="var(--font-mono)" font-size="12">
+            <rect x="370" y="375" width="165" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="452" y="405" text-anchor="middle" fill="var(--ink)">datasets.py</text>
+            <text x="452" y="421" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">upload, versions</text>
+
+            <rect x="555" y="375" width="165" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="637" y="405" text-anchor="middle" fill="var(--ink)">preprocess.py</text>
+            <text x="637" y="421" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">clean, split</text>
+
+            <rect x="740" y="375" width="185" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="832" y="405" text-anchor="middle" fill="var(--ink)">feature_selection.py</text>
+            <text x="832" y="421" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">12-method consensus</text>
+
+            <rect x="945" y="375" width="165" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="1027" y="405" text-anchor="middle" fill="var(--ink)">training.py</text>
+            <text x="1027" y="421" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">submit job — Fig. 05</text>
+
+            <rect x="1130" y="375" width="165" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="1212" y="405" text-anchor="middle" fill="var(--ink)">jobs.py</text>
+            <text x="1212" y="421" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">GET /jobs/{id}</text>
+          </g>
+
+          <line x1="1027" y1="445" x2="1027" y2="458" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="1212" y1="445" x2="1212" y2="458" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="1027" y1="458" x2="1212" y2="458" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="1120" y1="458" x2="1120" y2="465" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#arrow-ink-f)"/>
+          <rect x="945" y="468" width="350" height="40" rx="5" fill="var(--bg)" stroke="var(--ink)" stroke-width="1.25" stroke-dasharray="3 3"/>
+          <text x="1120" y="486" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink)">jobs/manager.py — ThreadPoolExecutor</text>
+          <text x="1120" y="500" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">polled via GET /jobs/{id} — Blueprint Fig. 05</text>
+
+          <line x1="700" y1="520" x2="700" y2="556" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-f)"/>
+          <text x="716" y="542" font-family="var(--font-mono)" font-size="11" fill="var(--ink-soft)">plain Python function calls — services/*.py</text>
+
+          <!-- ============ BAND 3: CORE ============ -->
+          <rect x="20" y="560" width="1360" height="250" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="40" y="585" font-family="var(--font-mono)" font-size="12.5" letter-spacing="0.05em" fill="var(--ink-soft)">CORE — src/ (framework-agnostic — no FastAPI, no React)</text>
+
+          <rect x="50" y="605" width="640" height="185" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="70" y="630" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">src/whatif/</text>
+          <text x="70" y="655" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">engine.py — dependency-graph dispatch, per-parameter fallback (Blueprint Fig. 04)</text>
+          <text x="70" y="678" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">config_io.py — the 8-sheet Config_file.xlsx reader/writer</text>
+          <text x="70" y="701" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">kpi.py · historian.py · wizard.py · model_status.py</text>
+          <text x="70" y="724" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">plants/ — plant-physics plugin (yanpet_olf1_formulas.py)</text>
+          <text x="70" y="760" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">→ Data/&lt;case_id&gt;/, Results/&lt;case_id&gt;/</text>
+
+          <rect x="710" y="605" width="640" height="185" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="730" y="630" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">pipeline core</text>
+          <text x="730" y="655" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">data/ — dataset versioning, preprocessing, model_registry</text>
+          <text x="730" y="678" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">feature_selection/ — 12-method consensus engine</text>
+          <text x="730" y="701" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">training/ · models/ — DAE/RF/XGBoost/LightGBM/LSTM/Kalman (Fig. 05)</text>
+          <text x="730" y="724" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">evaluation/ · persistence/ — metrics, saved_models/ I/O</text>
+          <text x="730" y="760" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">→ dashboard.db, saved_models/&lt;case_id&gt;/</text>
+
+          <line x1="700" y1="810" x2="700" y2="846" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-f)"/>
+          <text x="716" y="832" font-family="var(--font-mono)" font-size="11" fill="var(--ink-soft)">reads / writes — SQLite, pickles, Excel</text>
+
+          <!-- ============ BAND 4: PERSISTENCE ============ -->
+          <rect x="20" y="850" width="1360" height="330" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="40" y="875" font-family="var(--font-mono)" font-size="12.5" letter-spacing="0.05em" fill="var(--ink-soft)">PERSISTENCE — two separate worlds, one bridge (Blueprint Fig. 02)</text>
+
+          <rect x="50" y="895" width="430" height="250" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="70" y="920" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">MODEL-DEVELOPMENT PIPELINE</text>
+          <text x="70" y="948" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">model_registry — dashboard.db (+case_id)</text>
+          <text x="70" y="990" font-family="var(--font-mono)" font-size="11" fill="var(--ink)">saved_models/&lt;case_id&gt;/&lt;model_name&gt;/</text>
+          <text x="70" y="1032" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">datasets — dashboard.db, UNIQUE(case_id, name)</text>
+          <text x="70" y="1074" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">artifacts/&lt;case_id&gt;/&lt;project_id&gt;/</text>
+          <text x="70" y="1120" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">written by Connect Data / Build Model</text>
+
+          <rect x="900" y="895" width="430" height="250" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="920" y="920" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">WHAT-IF STUDIO</text>
+          <text x="920" y="948" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">Config_file.xlsx — Data/&lt;case_id&gt;/ (8 sheets)</text>
+          <text x="920" y="990" font-family="var(--font-mono)" font-size="11" fill="var(--ink)">kalman_filter_model_*.pkl</text>
+          <text x="920" y="1006" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">Results/&lt;case_id&gt;/Model/</text>
+          <text x="920" y="1040" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">DMC_Screen_tags_data.xlsx (training/historian)</text>
+          <text x="920" y="1074" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">Model_accuracy_summary.csv</text>
+          <text x="920" y="1120" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">written by What-If Setup / Advanced training</text>
+
+          <rect x="530" y="950" width="340" height="140" rx="6" fill="var(--accent-amber-bg)" stroke="var(--accent-amber)" stroke-width="2.5"/>
+          <text x="700" y="985" text-anchor="middle" font-family="var(--font-mono)" font-size="13" fill="var(--ink)">whatif_model_selection</text>
+          <text x="700" y="1005" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">parameter, model_name,</text>
+          <text x="700" y="1019" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">selected_at, case_id</text>
+          <text x="700" y="1050" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--accent-amber)">checked FIRST by engine.py</text>
+          <text x="700" y="1066" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--accent-amber)">— see Blueprint Fig. 02</text>
+
+          <line x1="480" y1="990" x2="524" y2="1000" stroke="var(--accent-amber)" stroke-width="2.25" marker-end="url(#arrow-amber-f)"/>
+          <text x="485" y="985" font-family="var(--font-body)" font-size="9.5" fill="var(--accent-amber)">"Selected for What-If Analysis"</text>
+
+          <line x1="900" y1="995" x2="876" y2="1010" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-f)"/>
+          <text x="895" y="985" text-anchor="end" font-family="var(--font-body)" font-size="9.5" fill="var(--accent-teal)">fallback: dedicated Kalman filter</text>
+
+          <!-- ============ case_id SPINE ============ -->
+          <line x1="1365" y1="20" x2="1365" y2="1180" stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="1 4"/>
+          <circle cx="1365" cy="155" r="4" fill="var(--ink-soft)"/>
+          <circle cx="1365" cy="425" r="4" fill="var(--ink-soft)"/>
+          <circle cx="1365" cy="685" r="4" fill="var(--ink-soft)"/>
+          <circle cx="1365" cy="1015" r="4" fill="var(--ink-soft)"/>
+          <text x="1348" y="145" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">ActiveCaseContext</text>
+          <text x="1348" y="159" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">(localStorage)</text>
+          <text x="1348" y="415" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">?case_id=...</text>
+          <text x="1348" y="429" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">default: "default"</text>
+          <text x="1348" y="675" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">paths.py</text>
+          <text x="1348" y="689" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">resolves the folder</text>
+          <text x="1348" y="1005" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">.../&lt;case_id&gt;/...</text>
+          <text x="1348" y="1019" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">on every path above</text>
+        </svg>
+      </div>
+      <figcaption><code>"default"</code> is a real case_id, not a special code path — it resolves to the original flat layout (<code>Data/Config_file.xlsx</code>, <code>Results/Model/</code>, <code>saved_models/&lt;model_name&gt;/</code>) with zero migration. Every case-aware function defaults to it. Case isolation only reaches the config/model layer — the plant physics plugin (<code>plants/</code>) is one shared module for every case.</figcaption>
+    </figure>
+  </section>
+
+  <footer>
+    <span>Sources: README.md</span>
+    <span>docs/ARCHITECTURE.md</span>
+    <span>docs/flow.md</span>
+    <span>backend/app/main.py</span>
+    <span>companion to: What-If Studio Blueprint, What-If Studio Wiring Guide</span>
+    <span>verified against source, 2026-08-26</span>
+  </footer>
+
+</div>

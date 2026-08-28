@@ -65,16 +65,17 @@ interface FeatureSelectionPageProps {
   // See UploadPage's hideStepper for why: avoids a duplicate progress
   // indicator when this page is embedded inside What-If Studio's tabs.
   hideStepper?: boolean
-  /** Forwarded to FinalApply — see its own onContinue doc for why this
-   * matters when embedded inside What-If Studio's Model Development flow. */
-  onContinue?: () => void
+  /** Forwarded to FinalApply, which requires it — see its own onContinue
+   * doc for why this matters when embedded inside What-If Studio's Model
+   * Development flow. */
+  onContinue: () => void
   /** Set by Model Definition's "Configure Model" action: locks Target
    * Variable selection to this single column (dataset is already carried
    * via ActiveDatasetContext) so the user isn't asked to pick Y again. */
   lockedTargetY?: string
 }
 
-export function FeatureSelectionPage({ hideStepper, onContinue, lockedTargetY }: FeatureSelectionPageProps = {}) {
+export function FeatureSelectionPage({ hideStepper, onContinue, lockedTargetY }: FeatureSelectionPageProps) {
   const { activeCaseId } = useActiveCase()
   const { activeDataset: datasetName, setActiveDataset: setDatasetName } = useActiveDataset()
 

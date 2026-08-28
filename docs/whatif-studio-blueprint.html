@@ -1,0 +1,775 @@
+<title>What-If Studio Blueprint</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#e7ebef;
+    --bg-panel:#f6f8fa;
+    --bg-grid:#c7d0d9;
+    --ink:#16212e;
+    --ink-soft:#51606e;
+    --line:#b7c2cc;
+    --accent-amber:#a8641a;
+    --accent-amber-bg:#f4e3c8;
+    --accent-teal:#276e68;
+    --code-bg:#dee5eb;
+    --shadow:rgba(22,33,46,0.10);
+
+    --font-display:'Big Shoulders', 'Arial Narrow', sans-serif;
+    --font-body:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e141b;
+      --bg-panel:#161d26;
+      --bg-grid:#223040;
+      --ink:#dce4ec;
+      --ink-soft:#8fa0af;
+      --line:#2b3846;
+      --accent-amber:#e8a33d;
+      --accent-amber-bg:#3a2c14;
+      --accent-teal:#57c2b8;
+      --code-bg:#1b2430;
+      --shadow:rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e141b;
+    --bg-panel:#161d26;
+    --bg-grid:#223040;
+    --ink:#dce4ec;
+    --ink-soft:#8fa0af;
+    --line:#2b3846;
+    --accent-amber:#e8a33d;
+    --accent-amber-bg:#3a2c14;
+    --accent-teal:#57c2b8;
+    --code-bg:#1b2430;
+    --shadow:rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0 / 100% 42px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0 / 42px 100%,
+      var(--bg);
+    background-blend-mode:normal;
+    opacity:1;
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.6;
+  }
+  body::before{ content:none; }
+
+  .page{
+    max-width:920px;
+    margin:0 auto;
+    padding:clamp(1.5rem,4vw,3.5rem) clamp(1rem,4vw,1.5rem) 4rem;
+    display:flex;
+    flex-direction:column;
+    gap:clamp(2.5rem,5vw,3.5rem);
+  }
+
+  header.hero{
+    display:flex;
+    flex-direction:column;
+    gap:0.9rem;
+    padding-bottom:1.75rem;
+    border-bottom:2px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:clamp(2.4rem,7vw,3.9rem);
+    line-height:0.94;
+    letter-spacing:0.01em;
+    text-wrap:balance;
+    margin:0;
+    color:var(--ink);
+  }
+  .dek{
+    font-size:1.05rem;
+    color:var(--ink-soft);
+    max-width:62ch;
+    margin:0;
+  }
+
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:1.25rem 2rem;
+    font-family:var(--font-mono);
+    font-size:0.76rem;
+    color:var(--ink-soft);
+    align-items:center;
+  }
+  .legend .key{ display:flex; align-items:center; gap:0.5rem; }
+  .legend svg{ width:34px; height:10px; flex-shrink:0; }
+
+  section.panel{
+    position:relative;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:5px;
+    box-shadow:0 8px 22px -12px var(--shadow);
+    padding:clamp(1.5rem,4vw,2.5rem) clamp(1.25rem,4vw,2.25rem) clamp(2rem,4vw,2.5rem);
+    display:flex;
+    flex-direction:column;
+    gap:1.1rem;
+  }
+  .tag{
+    position:absolute;
+    top:-13px;
+    left:1.5rem;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    padding:0.15rem 0.6rem;
+    font-family:var(--font-mono);
+    font-size:0.68rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    border-radius:3px;
+  }
+  h2{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(1.5rem,4vw,2rem);
+    margin:0.2rem 0 0;
+    color:var(--ink);
+    text-wrap:balance;
+  }
+  section.panel > p{
+    max-width:66ch;
+    margin:0;
+    color:var(--ink);
+  }
+  section.panel > p.sub{ color:var(--ink-soft); margin-top:-0.4rem; }
+
+  figure{ margin:0.4rem 0 0; }
+  figure .frame{
+    overflow-x:auto;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:1rem clamp(0.75rem,2vw,1.5rem);
+  }
+  figure svg{ display:block; width:100%; height:auto; max-width:100%; }
+  figcaption{
+    margin-top:0.7rem;
+    font-size:0.92rem;
+    color:var(--ink-soft);
+    max-width:70ch;
+  }
+  figcaption code, p code{
+    font-family:var(--font-mono);
+    background:var(--code-bg);
+    padding:0.1rem 0.35rem;
+    border-radius:3px;
+    font-size:0.86em;
+  }
+
+  table.ref{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.88rem;
+    margin-top:0.25rem;
+  }
+  table.ref caption{
+    text-align:left;
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:0.5rem;
+  }
+  table.ref th, table.ref td{
+    text-align:left;
+    padding:0.55rem 0.75rem;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  table.ref th{
+    font-family:var(--font-mono);
+    font-size:0.7rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    font-weight:500;
+  }
+  table.ref td.step{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1.1rem;
+    color:var(--accent-amber);
+    width:2rem;
+  }
+  table.ref td code{
+    font-family:var(--font-mono);
+    font-size:0.85em;
+    background:var(--code-bg);
+    padding:0.1rem 0.35rem;
+    border-radius:3px;
+    white-space:nowrap;
+  }
+  .tablewrap{ overflow-x:auto; }
+
+  dl.layers{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:1rem 1.5rem;
+    margin:0.25rem 0 0;
+    padding:0;
+  }
+  dl.layers div{ display:flex; flex-direction:column; gap:0.2rem; }
+  dl.layers dt{
+    font-family:var(--font-mono);
+    font-size:0.75rem;
+    letter-spacing:0.06em;
+    color:var(--accent-teal);
+  }
+  dl.layers dd{ margin:0; font-size:0.88rem; color:var(--ink-soft); }
+
+  footer{
+    font-family:var(--font-mono);
+    font-size:0.75rem;
+    color:var(--ink-soft);
+    border-top:1px solid var(--line);
+    padding-top:1.25rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.4rem 1.5rem;
+  }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">SoftSense AI — field reference</span>
+    <h1>What-If Studio<br>Blueprint</h1>
+    <p class="dek">Five schematics of the same system, at increasing zoom: the three code layers, the one deliberate bridge between its two persistence worlds, one traced request start to finish, the engine's per-parameter fallback logic that request runs through, and the async job pattern behind every long-running operation.</p>
+  </header>
+
+  <div class="legend" aria-hidden="false">
+    <span class="key">
+      <svg viewBox="0 0 34 10" role="img" aria-label="Solid amber line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--accent-amber)" stroke-width="2.5"/></svg>
+      value resolved / priority path
+    </span>
+    <span class="key">
+      <svg viewBox="0 0 34 10" role="img" aria-label="Solid ink line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--ink)" stroke-width="2"/></svg>
+      structural flow
+    </span>
+    <span class="key">
+      <svg viewBox="0 0 34 10" role="img" aria-label="Dashed line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 4"/></svg>
+      exception → fall through
+    </span>
+    <span class="key">
+      <svg viewBox="0 0 34 10" role="img" aria-label="Teal dashed line"><line x1="1" y1="5" x2="33" y2="5" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="5 4"/></svg>
+      response / secondary source
+    </span>
+  </div>
+
+  <!-- ================= PANEL A — LAYER STACK ================= -->
+  <section class="panel">
+    <span class="tag">Fig. 01</span>
+    <h2>The layer stack</h2>
+    <p class="sub">One import direction, top to bottom. <code>src/</code> never knows a browser or a web framework exists.</p>
+
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 700 620" role="img" aria-label="Four horizontal bands: Frontend, Backend, Core, and Persistence, connected by downward arrows labeled with how each layer talks to the one below it.">
+          <defs>
+            <marker id="arrow-ink-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/>
+            </marker>
+          </defs>
+
+          <!-- Band 1: FRONTEND -->
+          <rect x="40" y="20" width="620" height="100" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="66" y="58" font-family="var(--font-display)" font-weight="800" font-size="26" fill="var(--ink)">FRONTEND</text>
+          <text x="66" y="82" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">React + TypeScript + Vite — dev server on :5173</text>
+          <text x="634" y="102" text-anchor="end" font-family="var(--font-mono)" font-size="12" fill="var(--ink-soft)">frontend/src/</text>
+
+          <line x1="350" y1="120" x2="350" y2="172" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-a)"/>
+          <text x="366" y="140" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-soft)">HTTP via axios — /api/*,</text>
+          <text x="366" y="155" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-soft)">case_id stamped by client.ts</text>
+
+          <!-- Band 2: BACKEND -->
+          <rect x="40" y="180" width="620" height="100" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="66" y="218" font-family="var(--font-display)" font-weight="800" font-size="26" fill="var(--ink)">BACKEND</text>
+          <text x="66" y="242" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">FastAPI on :8010 — routes → schemas → services</text>
+          <text x="634" y="262" text-anchor="end" font-family="var(--font-mono)" font-size="12" fill="var(--ink-soft)">backend/app/</text>
+
+          <line x1="350" y1="280" x2="350" y2="332" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-a)"/>
+          <text x="366" y="300" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-soft)">plain Python function calls</text>
+          <text x="366" y="315" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-soft)">(no HTTP, no framework)</text>
+
+          <!-- Band 3: CORE -->
+          <rect x="40" y="340" width="620" height="100" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="66" y="378" font-family="var(--font-display)" font-weight="800" font-size="26" fill="var(--ink)">CORE</text>
+          <text x="66" y="402" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">Framework-agnostic logic — whatif/, data/, training/, models/…</text>
+          <text x="634" y="422" text-anchor="end" font-family="var(--font-mono)" font-size="12" fill="var(--ink-soft)">src/</text>
+
+          <line x1="350" y1="440" x2="350" y2="492" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-a)"/>
+          <text x="366" y="460" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-soft)">reads / writes</text>
+          <text x="366" y="475" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink-soft)">SQLite, pickles, Excel</text>
+
+          <!-- Band 4: PERSISTENCE -->
+          <rect x="40" y="500" width="620" height="100" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="66" y="538" font-family="var(--font-display)" font-weight="800" font-size="26" fill="var(--ink)">PERSISTENCE</text>
+          <text x="66" y="562" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">SQLite database, pickled models, Excel workbooks</text>
+          <text x="634" y="582" text-anchor="end" font-family="var(--font-mono)" font-size="12" fill="var(--ink-soft)">dashboard.db · saved_models/ · Data/ · Results/</text>
+        </svg>
+      </div>
+      <figcaption>Every backend feature is <code>routes → schemas → services → src</code>; every frontend page is <code>page → api/*.ts → axios → backend</code>. Long-running work (training, feature selection, dedicated Kalman retraining) detours through <code>jobs/manager.py</code>, polled at <code>GET /api/jobs/{id}</code> — everything else in this reference responds synchronously.</figcaption>
+    </figure>
+
+    <dl class="layers">
+      <div><dt>frontend/src/</dt><dd>Hand-rolled CSS + SVG charts, no UI/chart library. Pages compose React Query calls into typed <code>api/*.ts</code> wrappers.</dd></div>
+      <div><dt>backend/app/</dt><dd>Thin routes; Pydantic schemas; services do the orchestration and reshape results for the wire.</dd></div>
+      <div><dt>src/</dt><dd>The actual math and I/O — model training, the What-If dependency-graph engine, config parsing. Independently testable.</dd></div>
+      <div><dt>Persistence</dt><dd>Two separate worlds on purpose — see Fig. 02.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ================= PANEL D — THE ONE BRIDGE ================= -->
+  <section class="panel">
+    <span class="tag">Fig. 02</span>
+    <h2>The one bridge</h2>
+    <p class="sub">The model-development pipeline and What-If Studio keep separate persistence on purpose. Exactly one table crosses between them.</p>
+
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 920 480" role="img" aria-label="Two separate persistence worlds, the model-development pipeline on the left and What-If Studio on the right, connected only through the whatif_model_selection table, which the engine checks before falling back to a dedicated Kalman filter.">
+          <defs>
+            <marker id="arrow-amber-d" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-amber)"/></marker>
+            <marker id="arrow-teal-d" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-teal)"/></marker>
+            <marker id="arrow-ink-d" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+          </defs>
+
+          <!-- left world -->
+          <rect x="40" y="30" width="340" height="440" rx="5" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="60" y="58" font-family="var(--font-mono)" font-size="12" letter-spacing="0.08em" fill="var(--ink-soft)">MODEL-DEVELOPMENT PIPELINE</text>
+
+          <rect x="70" y="80" width="280" height="80" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="210" y="115" text-anchor="middle" font-family="var(--font-mono)" font-size="13" fill="var(--ink)">model_registry</text>
+          <text x="210" y="135" text-anchor="middle" font-family="var(--font-body)" font-size="12" fill="var(--ink-soft)">(+ case_id column)</text>
+
+          <line x1="210" y1="160" x2="210" y2="278" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-d)"/>
+          <text x="222" y="222" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">on Build Model finish</text>
+
+          <rect x="70" y="280" width="280" height="80" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="210" y="313" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">saved_models/&lt;case_id&gt;/</text>
+          <text x="210" y="332" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">&lt;model_name&gt;/</text>
+
+          <text x="60" y="450" font-family="var(--font-body)" font-size="12" fill="var(--ink-soft)">written by Connect Data / Build Model</text>
+
+          <!-- right world -->
+          <rect x="540" y="30" width="340" height="440" rx="5" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+          <text x="560" y="58" font-family="var(--font-mono)" font-size="12" letter-spacing="0.08em" fill="var(--ink-soft)">WHAT-IF STUDIO</text>
+
+          <rect x="570" y="80" width="280" height="80" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="710" y="113" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">Config_file.xlsx</text>
+          <text x="710" y="132" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">Data/&lt;case_id&gt;/</text>
+
+          <rect x="570" y="280" width="280" height="80" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="710" y="308" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">kalman_filter_model_*.pkl</text>
+          <text x="710" y="327" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Results/&lt;case_id&gt;/Model/</text>
+
+          <text x="850" y="450" text-anchor="end" font-family="var(--font-body)" font-size="12" fill="var(--ink-soft)">written by What-If Setup / Advanced training</text>
+
+          <!-- bridge -->
+          <rect x="390" y="150" width="140" height="140" rx="6" fill="var(--accent-amber-bg)" stroke="var(--accent-amber)" stroke-width="2.5"/>
+          <text x="460" y="192" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">whatif_model</text>
+          <text x="460" y="209" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">_selection</text>
+          <text x="460" y="230" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">parameter, model_name,</text>
+          <text x="460" y="244" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">selected_at, case_id</text>
+
+          <line x1="350" y1="140" x2="386" y2="185" stroke="var(--accent-amber)" stroke-width="2.5" marker-end="url(#arrow-amber-d)"/>
+          <text x="352" y="165" font-family="var(--font-body)" font-size="11" fill="var(--accent-amber)">"Selected for What-If</text>
+          <text x="352" y="178" font-family="var(--font-body)" font-size="11" fill="var(--accent-amber)">Analysis" click</text>
+
+          <line x1="460" y1="290" x2="460" y2="368" stroke="var(--accent-amber)" stroke-width="2.5" marker-end="url(#arrow-amber-d)"/>
+
+          <line x1="570" y1="330" x2="474" y2="376" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-d)"/>
+          <text x="490" y="352" font-family="var(--font-body)" font-size="11" fill="var(--accent-teal)">fallback if unselected,</text>
+          <text x="490" y="365" font-family="var(--font-body)" font-size="11" fill="var(--accent-teal)">or LookupError</text>
+
+          <line x1="710" y1="160" x2="500" y2="392" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2 4"/>
+
+          <rect x="310" y="378" width="300" height="72" rx="5" fill="var(--bg)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="460" y="405" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">engine.py :: whatif_analysis()</text>
+          <text x="460" y="424" text-anchor="middle" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">bridge checked first, per parameter</text>
+        </svg>
+      </div>
+      <figcaption>Deleting an experiment (Experiment History's 🗑️ action) removes its <code>saved_models/</code> folder, its <code>model_registry</code> row, <em>and</em> any <code>whatif_model_selection</code> row pointing at it — a case can't end up selecting a model that no longer exists. Nothing else about the two worlds' storage is allowed to cross-reference.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= PANEL B — REQUEST TRACE ================= -->
+  <section class="panel">
+    <span class="tag">Fig. 03</span>
+    <h2>One request, traced</h2>
+    <p class="sub">The "🚀 Compute What-If Scenario" button, start to finish. Every other flow in the app follows this same five-hop shape.</p>
+
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 1000 320" role="img" aria-label="Five stations left to right — the dashboard page, the API client, the FastAPI route, the service, and the engine — connected by labeled arrows showing the request going forward, and a dashed return arrow showing the JSON response coming back to re-render the page.">
+          <defs>
+            <marker id="arrow-amber-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-amber)"/></marker>
+            <marker id="arrow-teal-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-teal)"/></marker>
+          </defs>
+
+          <!-- boxes -->
+          <g font-family="var(--font-mono)" font-size="11.5">
+            <rect x="20" y="100" width="160" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="100" y="135" text-anchor="middle" fill="var(--ink)" font-size="12.5">DashboardPage</text>
+            <text x="100" y="151" text-anchor="middle" fill="var(--ink)" font-size="12.5">.tsx</text>
+            <text x="100" y="175" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">UI</text>
+
+            <rect x="220" y="100" width="160" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="300" y="135" text-anchor="middle" fill="var(--ink)" font-size="12.5">api/whatIf.ts</text>
+            <text x="300" y="151" text-anchor="middle" fill="var(--ink)" font-size="12.5">runScenario()</text>
+            <text x="300" y="175" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">typed client</text>
+
+            <rect x="420" y="100" width="160" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="500" y="135" text-anchor="middle" fill="var(--ink)" font-size="12.5">routes/what_if.py</text>
+            <text x="500" y="151" text-anchor="middle" fill="var(--ink)" font-size="12.5">dashboard_compute()</text>
+            <text x="500" y="175" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">FastAPI route</text>
+
+            <rect x="620" y="100" width="160" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="700" y="135" text-anchor="middle" fill="var(--ink)" font-size="12.5">what_if_service.py</text>
+            <text x="700" y="151" text-anchor="middle" fill="var(--ink)" font-size="12.5">run_scenario()</text>
+            <text x="700" y="175" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">orchestration</text>
+
+            <rect x="820" y="100" width="160" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="900" y="135" text-anchor="middle" fill="var(--ink)" font-size="12.5">engine.py</text>
+            <text x="900" y="151" text-anchor="middle" fill="var(--ink)" font-size="12.5">whatif_analysis()</text>
+            <text x="900" y="175" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">dependency graph → Fig. 04</text>
+          </g>
+
+          <!-- forward arrows -->
+          <g stroke="var(--accent-amber)" stroke-width="2" fill="none" marker-end="url(#arrow-amber-b)">
+            <line x1="180" y1="145" x2="216" y2="145"/>
+            <line x1="380" y1="145" x2="416" y2="145"/>
+            <line x1="580" y1="145" x2="616" y2="145"/>
+            <line x1="780" y1="145" x2="816" y2="145"/>
+          </g>
+          <g font-family="var(--font-mono)" font-size="10" fill="var(--accent-amber)" text-anchor="middle">
+            <text x="198" y="97">click → mutate()</text>
+            <text x="398" y="97">POST /dashboard/compute</text>
+            <text x="598" y="97">run_scenario(body, case_id)</text>
+            <text x="798" y="97">whatif_analysis(cfg, df, …)</text>
+          </g>
+
+          <!-- return path -->
+          <path d="M900,190 L900,270 L100,270 L100,190" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-b)"/>
+          <text x="500" y="292" text-anchor="middle" font-family="var(--font-body)" font-size="12" fill="var(--accent-teal)">200 JSON — KpiCardsRow, ActualVsEstimatedTable re-render</text>
+        </svg>
+      </div>
+      <figcaption>The route is a genuine one-liner — parse <code>case_id</code>, call the service, return its result. All the orchestration (load historian + config for the case, call the engine, reshape KPIs scoped to the active Target Section) lives in <code>run_scenario()</code>.</figcaption>
+    </figure>
+
+    <div class="tablewrap">
+      <table class="ref">
+        <caption>Call sheet — file : line, verified against source</caption>
+        <thead><tr><th>Hop</th><th>File</th><th>Function</th><th>Line</th></tr></thead>
+        <tbody>
+          <tr><td class="step">1</td><td>frontend/src/pages/WhatIf/DashboardPage.tsx</td><td>runCompute() → scenarioMutation.mutate()</td><td><code>107 / 67</code></td></tr>
+          <tr><td class="step">2</td><td>frontend/src/api/whatIf.ts</td><td>runScenario()</td><td><code>282</code></td></tr>
+          <tr><td class="step">3</td><td>backend/app/api/routes/what_if.py</td><td>dashboard_compute()</td><td><code>263</code></td></tr>
+          <tr><td class="step">4</td><td>backend/app/services/what_if_service.py</td><td>run_scenario()</td><td><code>905</code></td></tr>
+          <tr><td class="step">5</td><td>src/whatif/engine.py</td><td>whatif_analysis()</td><td><code>409</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= PANEL C — ENGINE DISPATCH ================= -->
+  <section class="panel">
+    <span class="tag">Fig. 04</span>
+    <h2>Engine dispatch, per parameter</h2>
+    <p class="sub">What station 5 actually runs, once per predicted parameter, in topological order — <code>src/whatif/engine.py::whatif_analysis()</code>.</p>
+
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 920 1180" role="img" aria-label="Flowchart: for each parameter, check if it is plugin-owned or simulation-type and run its physics function; otherwise try a selected Soft Sensor model, falling through on LookupError to a dedicated Kalman filter, falling through on missing artifacts to the baseline value. All four outcomes converge, then a user override is applied, then a constraint check either halts the run or fires a hook and continues to the next parameter.">
+          <defs>
+            <marker id="arrow-ink-c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+            <marker id="arrow-amber-c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-amber)"/></marker>
+          </defs>
+
+          <!-- start -->
+          <rect x="100" y="15" width="320" height="60" rx="6" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="260" y="40" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" letter-spacing="0.04em" fill="var(--ink)">FOR EACH PREDICTED PARAMETER</text>
+          <text x="260" y="58" text-anchor="middle" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)">in topological execution order</text>
+          <line x1="260" y1="75" x2="260" y2="110" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-c)"/>
+
+          <!-- diamond 1 -->
+          <polygon points="260,113 383,190 260,267 137,190" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="2"/>
+          <text x="260" y="184" text-anchor="middle" font-family="var(--font-body)" font-size="12.5" fill="var(--ink)">Plugin-owned or</text>
+          <text x="260" y="200" text-anchor="middle" font-family="var(--font-body)" font-size="12.5" fill="var(--ink)">simulation-type?</text>
+
+          <line x1="383" y1="190" x2="447" y2="190" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-c)"/>
+          <text x="415" y="178" text-anchor="middle" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">yes</text>
+
+          <rect x="450" y="150" width="220" height="80" rx="6" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="560" y="182" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Run plugin SIMULATION /</text>
+          <text x="560" y="199" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">formula function</text>
+          <text x="560" y="217" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">(else: keep baseline)</text>
+
+          <line x1="560" y1="230" x2="560" y2="790" stroke="var(--accent-amber)" stroke-width="2.25" marker-end="url(#arrow-amber-c)"/>
+
+          <line x1="260" y1="267" x2="260" y2="300" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-c)"/>
+          <text x="272" y="288" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">no</text>
+
+          <!-- S1: soft sensor -->
+          <rect x="110" y="303" width="300" height="90" rx="6" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="260" y="333" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Try: Soft Sensor prediction</text>
+          <text x="260" y="351" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">whatif_model_selection lookup,</text>
+          <text x="260" y="366" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">this case_id — Fig. 02's bridge</text>
+          <text x="260" y="384" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">scale → predict → inverse-scale</text>
+
+          <line x1="410" y1="325" x2="450" y2="325" stroke="var(--accent-amber)" stroke-width="2.25" marker-end="url(#arrow-amber-c)"/>
+          <line x1="450" y1="325" x2="460" y2="325" stroke="var(--accent-amber)" stroke-width="2.25"/>
+          <path d="M450,325 L460,325 L460,790" fill="none" stroke="var(--accent-amber)" stroke-width="2.25" marker-end="url(#arrow-amber-c)"/>
+          <text x="464" y="316" font-family="var(--font-body)" font-size="10.5" fill="var(--accent-amber)">✓ selected &amp; features present</text>
+
+          <line x1="260" y1="393" x2="260" y2="440" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-ink-c)"/>
+          <text x="272" y="422" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">✗ LookupError — no selection,</text>
+          <text x="272" y="434" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">or missing X-feature column</text>
+
+          <!-- S2: kalman -->
+          <rect x="110" y="443" width="300" height="90" rx="6" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="260" y="473" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Try: Kalman filter prediction</text>
+          <text x="260" y="491" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">Results/&lt;case_id&gt;/Model/</text>
+          <text x="260" y="506" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-soft)">kalman_filter_model_{y_col}.pkl</text>
+          <text x="260" y="524" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">step fitted filter, no measurement</text>
+
+          <path d="M410,465 L430,465 L430,790" fill="none" stroke="var(--accent-amber)" stroke-width="2.25" marker-end="url(#arrow-amber-c)"/>
+          <text x="434" y="456" font-family="var(--font-body)" font-size="10.5" fill="var(--accent-amber)">✓ artifacts found</text>
+
+          <line x1="260" y1="533" x2="260" y2="578" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-ink-c)"/>
+          <text x="272" y="560" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">✗ FileNotFoundError / KeyError</text>
+
+          <!-- baseline -->
+          <rect x="110" y="581" width="300" height="66" rx="6" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="260" y="608" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Keep baseline value</text>
+          <text x="260" y="626" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">(logged — never raised)</text>
+
+          <line x1="260" y1="647" x2="260" y2="790" stroke="var(--accent-amber)" stroke-width="2.25" marker-end="url(#arrow-amber-c)"/>
+
+          <!-- merge -->
+          <rect x="20" y="793" width="580" height="70" rx="6" fill="var(--accent-amber-bg)" stroke="var(--accent-amber)" stroke-width="1.75"/>
+          <text x="310" y="822" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">Apply user override</text>
+          <text x="310" y="840" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">wins over whatever was just predicted</text>
+
+          <line x1="280" y1="863" x2="280" y2="925" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-c)"/>
+
+          <!-- diamond 2: constraint -->
+          <polygon points="280,928 410,1003 280,1078 150,1003" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="2"/>
+          <text x="280" y="997" text-anchor="middle" font-family="var(--font-body)" font-size="12" fill="var(--ink)">abort_if_exceeds</text>
+          <text x="280" y="1013" text-anchor="middle" font-family="var(--font-body)" font-size="12" fill="var(--ink)">tripped?</text>
+
+          <line x1="410" y1="1003" x2="497" y2="1003" stroke="var(--accent-amber)" stroke-width="2.25" marker-end="url(#arrow-amber-c)"/>
+          <text x="453" y="991" text-anchor="middle" font-family="var(--font-body)" font-size="11" fill="var(--accent-amber)">yes</text>
+
+          <rect x="500" y="958" width="260" height="90" rx="6" fill="var(--accent-amber-bg)" stroke="var(--accent-amber)" stroke-width="2"/>
+          <text x="630" y="988" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">STOP — run halts here</text>
+          <text x="630" y="1006" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">value ← constraint Remark text</text>
+          <text x="630" y="1021" text-anchor="middle" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">constraint_hit = true on response</text>
+
+          <line x1="280" y1="1078" x2="280" y2="1120" stroke="var(--ink)" stroke-width="2" marker-end="url(#arrow-ink-c)"/>
+          <text x="292" y="1101" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">no</text>
+
+          <rect x="130" y="1123" width="300" height="55" rx="6" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="280" y="1155" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">fire hook after:&lt;param&gt;</text>
+
+          <path d="M430,1150 L880,1150 L880,45 L423,45" fill="none" stroke="var(--ink)" stroke-width="1.75" marker-end="url(#arrow-ink-c)"/>
+          <text x="882" y="600" font-family="var(--font-body)" font-size="11.5" fill="var(--ink-soft)" transform="rotate(90 882 600)" text-anchor="middle">next parameter, topological order</text>
+        </svg>
+      </div>
+      <figcaption>A safety-net pass after the loop fires any hook whose trigger parameter never appeared in the execution order (usually a misspelling in the <code>Model details</code> sheet), so its outputs don't silently stay frozen at baseline. <code>src/whatif/model_status.py::required_kalman_tags()</code> mirrors this same cascade to decide the Analysis page's readiness gate — a parameter only needs a trained <code>.pkl</code> if it has no Soft Sensor selection <em>and</em> isn't plugin/simulation-owned.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= PANEL E — MODEL TRAINING ================= -->
+  <section class="panel">
+    <span class="tag">Fig. 05</span>
+    <h2>Model training — the async job pattern</h2>
+    <p class="sub">Model Development's "Build Model" phase (<code>TrainPage.tsx</code>). Unlike Fig. 03's synchronous compute, this is the shape every long-running operation in the app follows: submit returns instantly, the work runs on a background thread, the frontend polls until it's done.</p>
+
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 1100 900" role="img" aria-label="Submitting a training job returns a job id immediately while the actual training runs on a background thread, dispatching to one of three algorithm families, then writing the trained model to disk and to the model registry. In parallel, the frontend polls the jobs endpoint every 1.5 seconds until the job is done, at which point both the registry write and the poll loop's completion converge on the rendered result.">
+          <defs>
+            <marker id="arrow-amber-e" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-amber)"/></marker>
+            <marker id="arrow-teal-e" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent-teal)"/></marker>
+            <marker id="arrow-ink-e" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+          </defs>
+
+          <!-- Row 1: submit chain -->
+          <g font-family="var(--font-mono)" font-size="11.5">
+            <rect x="20" y="40" width="190" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="115" y="75" text-anchor="middle" fill="var(--ink)" font-size="12">TrainPage.tsx</text>
+            <text x="115" y="91" text-anchor="middle" fill="var(--ink)" font-size="12">submitMutation</text>
+            <text x="115" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="10">click "Train"</text>
+
+            <rect x="237" y="40" width="190" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="332" y="75" text-anchor="middle" fill="var(--ink)" font-size="12">api/training.ts</text>
+            <text x="332" y="91" text-anchor="middle" fill="var(--ink)" font-size="12">submitTraining()</text>
+            <text x="332" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="10">:8</text>
+
+            <rect x="454" y="40" width="190" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="549" y="75" text-anchor="middle" fill="var(--ink)" font-size="12">routes/training.py</text>
+            <text x="549" y="91" text-anchor="middle" fill="var(--ink)" font-size="12">submit_training()</text>
+            <text x="549" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="10">:14</text>
+
+            <rect x="671" y="40" width="190" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="766" y="75" text-anchor="middle" fill="var(--ink)" font-size="12">training_service.py</text>
+            <text x="766" y="91" text-anchor="middle" fill="var(--ink)" font-size="12">prepare_training_job()</text>
+            <text x="766" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="10">:144</text>
+
+            <rect x="888" y="40" width="190" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+            <text x="983" y="75" text-anchor="middle" fill="var(--ink)" font-size="12">jobs/manager.py</text>
+            <text x="983" y="91" text-anchor="middle" fill="var(--ink)" font-size="12">job_manager.submit()</text>
+            <text x="983" y="112" text-anchor="middle" fill="var(--ink-soft)" font-size="10">:50</text>
+          </g>
+
+          <g stroke="var(--accent-amber)" stroke-width="2" fill="none" marker-end="url(#arrow-amber-e)">
+            <line x1="210" y1="85" x2="233" y2="85"/>
+            <line x1="427" y1="85" x2="450" y2="85"/>
+            <line x1="644" y1="85" x2="667" y2="85"/>
+            <line x1="861" y1="85" x2="884" y2="85"/>
+          </g>
+          <g font-family="var(--font-mono)" font-size="9.5" fill="var(--accent-amber)" text-anchor="middle">
+            <text x="221" y="30">{ project_id, algorithm,</text>
+            <text x="221" y="41">hyperparameters }</text>
+            <text x="438" y="30">POST /training/jobs</text>
+            <text x="655" y="30">prepare_training_job(...)</text>
+            <text x="872" y="30">submit(target, progress_mode)</text>
+          </g>
+
+          <!-- fast synchronous return -->
+          <path d="M983,130 L983,165 L115,165 L115,130" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-e)"/>
+          <text x="549" y="185" text-anchor="middle" font-family="var(--font-body)" font-size="11.5" fill="var(--accent-teal)">202 { job_id } — returned immediately, before training starts</text>
+
+          <!-- background thread container -->
+          <rect x="280" y="210" width="800" height="350" rx="6" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 4"/>
+          <text x="300" y="234" font-family="var(--font-mono)" font-size="11" letter-spacing="0.06em" fill="var(--ink-soft)">THREADPOOLEXECUTOR — BACKGROUND THREAD (max_workers=2)</text>
+
+          <line x1="983" y1="130" x2="983" y2="225" stroke="var(--accent-amber)" stroke-width="2" stroke-dasharray="1 0"/>
+          <line x1="983" y1="225" x2="680" y2="225" stroke="var(--accent-amber)" stroke-width="2"/>
+          <line x1="680" y1="225" x2="680" y2="240" stroke="var(--accent-amber)" stroke-width="2" marker-end="url(#arrow-amber-e)"/>
+          <circle cx="680" cy="240" r="3" fill="var(--accent-amber)"/>
+          <text x="700" y="215" font-family="var(--font-body)" font-size="10.5" fill="var(--ink-soft)">runs target() in the thread — dispatch by algorithm name:</text>
+
+          <g stroke="var(--accent-amber)" stroke-width="1.75" marker-end="url(#arrow-amber-e)">
+            <line x1="680" y1="240" x2="440" y2="248"/>
+            <line x1="680" y1="240" x2="690" y2="248"/>
+            <line x1="680" y1="240" x2="940" y2="248"/>
+          </g>
+
+          <rect x="310" y="250" width="240" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="430" y="272" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">DAE / LSTM</text>
+          <text x="430" y="288" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink)">trainer.py / train_lstm.py</text>
+          <text x="430" y="303" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">progress_mode: epoch</text>
+
+          <rect x="570" y="250" width="240" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="690" y="272" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--ink)">RF / XGBoost / LightGBM</text>
+          <text x="690" y="288" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink)">train_sklearn.py</text>
+          <text x="690" y="303" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">progress_mode: none</text>
+
+          <rect x="830" y="250" width="240" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="950" y="272" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">Kalman Filter</text>
+          <text x="950" y="288" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink)">train_kalman.py</text>
+          <text x="950" y="303" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">progress_mode: none</text>
+
+          <g stroke="var(--accent-amber)" stroke-width="1.75" marker-end="url(#arrow-amber-e)">
+            <line x1="430" y1="320" x2="600" y2="358"/>
+            <line x1="690" y1="320" x2="680" y2="358"/>
+            <line x1="950" y1="320" x2="760" y2="358"/>
+          </g>
+
+          <rect x="530" y="360" width="300" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="680" y="385" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">_finish()</text>
+          <text x="680" y="402" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">training_service.py :48 — compute train + test metrics</text>
+          <text x="680" y="417" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">via src/evaluation/metrics.py::compute_metrics()</text>
+
+          <line x1="620" y1="430" x2="480" y2="468" stroke="var(--accent-amber)" stroke-width="2" marker-end="url(#arrow-amber-e)"/>
+          <line x1="740" y1="430" x2="830" y2="468" stroke="var(--accent-amber)" stroke-width="2" marker-end="url(#arrow-amber-e)"/>
+
+          <rect x="330" y="470" width="300" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="480" y="493" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">saved_models/&lt;case_id&gt;/&lt;model_name&gt;/</text>
+          <text x="480" y="510" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">model_store.py::save_model_to_disk()</text>
+          <text x="480" y="525" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">wrapper + both scalers + x/y cols, pickled</text>
+
+          <rect x="680" y="470" width="300" height="70" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="830" y="493" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">model_registry (dashboard.db)</text>
+          <text x="830" y="510" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">database.py::save_model_to_registry()</text>
+          <text x="830" y="525" text-anchor="middle" font-family="var(--font-body)" font-size="9.5" fill="var(--ink-soft)">best-effort — try/except never blocks a successful run</text>
+
+          <!-- poll loop -->
+          <text x="40" y="595" font-family="var(--font-mono)" font-size="11" letter-spacing="0.06em" fill="var(--ink-soft)">MEANWHILE — THE FRONTEND POLL LOOP</text>
+
+          <rect x="40" y="610" width="280" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="180" y="640" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">useJobPolling.ts</text>
+          <text x="180" y="657" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">refetchInterval: 1500ms</text>
+          <text x="180" y="672" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">until done:true — :11</text>
+
+          <rect x="400" y="610" width="280" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="540" y="645" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">api/jobs.ts::getJob()</text>
+          <text x="540" y="662" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">GET /api/jobs/{id}</text>
+
+          <rect x="760" y="610" width="280" height="90" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="900" y="645" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">routes/jobs.py::get_job()</text>
+          <text x="900" y="662" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">job_manager.get(job_id) — :11</text>
+
+          <line x1="320" y1="640" x2="396" y2="640" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-e)"/>
+          <line x1="680" y1="640" x2="756" y2="640" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-e)"/>
+          <text x="360" y="628" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--accent-teal)">every</text>
+          <text x="360" y="639" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--accent-teal)">1.5s</text>
+
+          <path d="M900,700 L900,730 L320,730 L320,700" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-e)"/>
+          <text x="610" y="748" text-anchor="middle" font-family="var(--font-body)" font-size="11" fill="var(--accent-teal)">{ done, progress, result }</text>
+
+          <!-- convergence into result -->
+          <path d="M830,540 L1070,540 L1070,780 L900,780" fill="none" stroke="var(--accent-amber)" stroke-width="2" marker-end="url(#arrow-amber-e)"/>
+          <line x1="900" y1="780" x2="900" y2="800" stroke="var(--accent-amber)" stroke-width="2" marker-end="url(#arrow-amber-e)"/>
+
+          <line x1="150" y1="700" x2="150" y2="800" stroke="var(--accent-teal)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow-teal-e)"/>
+          <text x="150" y="765" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--accent-teal)">done:true</text>
+
+          <rect x="140" y="800" width="900" height="80" rx="6" fill="var(--accent-amber-bg)" stroke="var(--accent-amber)" stroke-width="1.75"/>
+          <text x="590" y="830" text-anchor="middle" font-family="var(--font-mono)" font-size="12.5" fill="var(--ink)">TrainPage.tsx renders: metrics table + loss curves (DAE/LSTM only)</text>
+          <text x="590" y="850" text-anchor="middle" font-family="var(--font-body)" font-size="11" fill="var(--ink-soft)">the new experiment is now selectable in Experimentation &amp; Model Selection — Fig. 02's bridge</text>
+          <text x="590" y="866" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">(guided mode instead shows Accept / Improve — TrainPage.tsx's GuidedTrainProps)</text>
+        </svg>
+      </div>
+      <figcaption>MLflow experiment tracking (params, metrics, per-epoch curves, artifacts) also runs inside <code>_finish()</code>, wrapped in the same best-effort <code>try/except</code> as the registry write — omitted above to keep the diagram to the two writes that gate what the rest of the app can see. Feature selection follows this identical submit → background-thread → poll shape, just with <code>progress_mode: "message"</code> instead of <code>"epoch"</code>/<code>"none"</code>.</figcaption>
+    </figure>
+  </section>
+
+  <footer>
+    <span>Sources: README.md</span>
+    <span>docs/ARCHITECTURE.md</span>
+    <span>docs/flow.md</span>
+    <span>src/whatif/engine.py</span>
+    <span>backend/app/services/training_service.py</span>
+    <span>verified against source, 2026-08-25 — Fig. 05 added 2026-08-26</span>
+  </footer>
+
+</div>

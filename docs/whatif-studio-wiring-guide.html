@@ -1,0 +1,338 @@
+<title>What-If Studio Wiring Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#e7ebef;
+    --bg-panel:#f6f8fa;
+    --bg-grid:#c7d0d9;
+    --ink:#16212e;
+    --ink-soft:#51606e;
+    --line:#b7c2cc;
+    --accent-amber:#a8641a;
+    --accent-amber-bg:#f4e3c8;
+    --accent-teal:#276e68;
+    --accent-teal-bg:#dcece9;
+    --code-bg:#dee5eb;
+    --shadow:rgba(22,33,46,0.10);
+
+    --font-display:'Big Shoulders', 'Arial Narrow', sans-serif;
+    --font-body:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono:'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e141b; --bg-panel:#161d26; --bg-grid:#223040;
+      --ink:#dce4ec; --ink-soft:#8fa0af; --line:#2b3846;
+      --accent-amber:#e8a33d; --accent-amber-bg:#3a2c14;
+      --accent-teal:#57c2b8; --accent-teal-bg:#16302c;
+      --code-bg:#1b2430; --shadow:rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e141b; --bg-panel:#161d26; --bg-grid:#223040;
+    --ink:#dce4ec; --ink-soft:#8fa0af; --line:#2b3846;
+    --accent-amber:#e8a33d; --accent-amber-bg:#3a2c14;
+    --accent-teal:#57c2b8; --accent-teal-bg:#16302c;
+    --code-bg:#1b2430; --shadow:rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0 / 100% 42px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0 / 42px 100%,
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.6;
+  }
+
+  .page{
+    max-width:1080px;
+    margin:0 auto;
+    padding:clamp(1.5rem,4vw,3.5rem) clamp(1rem,4vw,1.5rem) 4rem;
+    display:flex;
+    flex-direction:column;
+    gap:clamp(2.25rem,5vw,3rem);
+  }
+
+  header.hero{ display:flex; flex-direction:column; gap:0.9rem; padding-bottom:1.75rem; border-bottom:2px solid var(--line); }
+  .eyebrow{ font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-soft); }
+  h1{ font-family:var(--font-display); font-weight:800; font-size:clamp(2.3rem,6.5vw,3.6rem); line-height:0.96; text-wrap:balance; margin:0; color:var(--ink); }
+  .dek{ font-size:1.02rem; color:var(--ink-soft); max-width:68ch; margin:0; }
+  .keypath{ font-family:var(--font-mono); font-size:0.82rem; color:var(--ink-soft); background:var(--code-bg); border-radius:4px; padding:0.6rem 0.9rem; max-width:68ch; }
+  .keypath b{ color:var(--ink); font-weight:500; }
+
+  section.panel{
+    position:relative;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:5px;
+    box-shadow:0 8px 22px -12px var(--shadow);
+    padding:clamp(1.5rem,4vw,2.25rem) clamp(1.1rem,4vw,2rem) clamp(1.75rem,4vw,2.25rem);
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+  }
+  section.panel.field-note{ background:var(--accent-amber-bg); border-color:var(--accent-amber); }
+  .tag{
+    position:absolute; top:-13px; left:1.5rem;
+    background:var(--bg-panel); border:1px solid var(--line);
+    padding:0.15rem 0.6rem; font-family:var(--font-mono); font-size:0.68rem;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); border-radius:3px;
+  }
+  .field-note .tag{ background:var(--accent-amber-bg); border-color:var(--accent-amber); color:var(--accent-amber); }
+
+  h2{ font-family:var(--font-display); font-weight:700; font-size:clamp(1.4rem,3.6vw,1.8rem); margin:0.2rem 0 0; color:var(--ink); text-wrap:balance; }
+  h3{ font-family:var(--font-mono); font-size:0.85rem; letter-spacing:0.04em; color:var(--accent-teal); margin:0.5rem 0 -0.3rem; text-transform:uppercase; }
+  section.panel > p{ max-width:70ch; margin:0; color:var(--ink); }
+  section.panel > p.sub{ color:var(--ink-soft); margin-top:-0.4rem; }
+
+  figure{ margin:0.4rem 0 0; }
+  figure .frame{ overflow-x:auto; background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:1rem clamp(0.75rem,2vw,1.5rem); }
+  figure svg{ display:block; width:100%; height:auto; max-width:100%; }
+  figcaption{ margin-top:0.6rem; font-size:0.9rem; color:var(--ink-soft); max-width:70ch; }
+
+  .tablewrap{ overflow-x:auto; }
+  table.ref{ width:100%; border-collapse:collapse; font-size:0.86rem; margin-top:0.15rem; min-width:640px; }
+  table.ref th, table.ref td{ text-align:left; padding:0.55rem 0.7rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.ref th{ font-family:var(--font-mono); font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-soft); font-weight:500; white-space:nowrap; }
+  table.ref td:first-child{ font-weight:600; white-space:nowrap; }
+  table.ref code{ font-family:var(--font-mono); font-size:0.85em; background:var(--code-bg); padding:0.08rem 0.32rem; border-radius:3px; white-space:nowrap; }
+  table.ref tr.discrepancy td{ background:var(--accent-amber-bg); }
+
+  ol.corrections{ margin:0; padding-left:1.3rem; display:flex; flex-direction:column; gap:0.65rem; }
+  ol.corrections li{ max-width:74ch; }
+  ol.corrections code{ font-family:var(--font-mono); font-size:0.88em; background:var(--code-bg); padding:0.08rem 0.32rem; border-radius:3px; }
+
+  .pill{
+    display:inline-block; font-family:var(--font-mono); font-size:0.68rem; letter-spacing:0.04em;
+    text-transform:uppercase; padding:0.12rem 0.5rem; border-radius:999px;
+    background:var(--accent-teal-bg); color:var(--accent-teal); border:1px solid var(--accent-teal);
+  }
+
+  footer{
+    font-family:var(--font-mono); font-size:0.75rem; color:var(--ink-soft);
+    border-top:1px solid var(--line); padding-top:1.25rem;
+    display:flex; flex-wrap:wrap; gap:0.4rem 1.5rem;
+  }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">SoftSense AI — field reference, companion to the Blueprint</span>
+    <h1>What-If Studio<br>Wiring Guide</h1>
+    <p class="dek">Every tab and sub-tab of What-If Studio, mapped to the exact frontend component, API wrapper, backend route, service function, and <code>src/</code> module it calls — verified line-by-line against source, not copied from the docs.</p>
+    <div class="keypath">Paths below are shortened: frontend files are under <b>frontend/src/pages/WhatIf/</b> unless noted; API wrappers under <b>frontend/src/api/</b>; routes under <b>backend/app/api/routes/</b>; services under <b>backend/app/services/</b>.</div>
+  </header>
+
+  <!-- ===== NAV MAP ===== -->
+  <section class="panel">
+    <span class="tag">Fig. 01</span>
+    <h2>The tab tree</h2>
+    <p class="sub">What this guide walks through, top to bottom.</p>
+    <figure>
+      <div class="frame">
+        <svg viewBox="0 0 920 300" role="img" aria-label="Tab tree: the sidebar leads to Welcome, What-If Setup, and What-If Analysis; What-If Setup expands into System Config, Model Config, and What-If Config sub-tabs.">
+          <defs>
+            <marker id="arrow-wg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+          </defs>
+          <rect x="370" y="15" width="180" height="46" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="460" y="43" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Sidebar</text>
+
+          <line x1="460" y1="61" x2="460" y2="90" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="460" y1="90" x2="130" y2="90" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="460" y1="90" x2="790" y2="90" stroke="var(--ink)" stroke-width="1.5"/>
+
+          <line x1="130" y1="90" x2="130" y2="112" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#arrow-wg)"/>
+          <line x1="460" y1="90" x2="460" y2="112" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#arrow-wg)"/>
+          <line x1="790" y1="90" x2="790" y2="112" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#arrow-wg)"/>
+
+          <rect x="30" y="115" width="200" height="50" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="130" y="145" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Welcome</text>
+
+          <rect x="330" y="115" width="260" height="50" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="460" y="145" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">What-If Setup</text>
+
+          <rect x="670" y="115" width="220" height="50" rx="5" fill="var(--bg-panel)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="780" y="145" text-anchor="middle" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">What-If Analysis</text>
+
+          <line x1="460" y1="165" x2="460" y2="190" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="230" y1="190" x2="690" y2="190" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="230" y1="190" x2="230" y2="210" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#arrow-wg)"/>
+          <line x1="460" y1="190" x2="460" y2="210" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#arrow-wg)"/>
+          <line x1="690" y1="190" x2="690" y2="210" stroke="var(--ink)" stroke-width="1.5" marker-end="url(#arrow-wg)"/>
+
+          <rect x="130" y="213" width="200" height="70" rx="5" fill="var(--bg)" stroke="var(--ink)" stroke-width="1.25"/>
+          <text x="230" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">System Config</text>
+          <text x="230" y="258" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">3 sub-tabs — Table 02</text>
+
+          <rect x="360" y="213" width="200" height="70" rx="5" fill="var(--bg)" stroke="var(--ink)" stroke-width="1.25"/>
+          <text x="460" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">Model Config</text>
+          <text x="460" y="258" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">Tables 03–05</text>
+
+          <rect x="590" y="213" width="200" height="70" rx="5" fill="var(--bg)" stroke="var(--ink)" stroke-width="1.25"/>
+          <text x="690" y="240" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" fill="var(--ink)">What-If Config</text>
+          <text x="690" y="258" text-anchor="middle" font-family="var(--font-body)" font-size="10" fill="var(--ink-soft)">3 sub-tabs — Table 06</text>
+        </svg>
+      </div>
+      <figcaption>What-If Setup always opens on System Config, regardless of how you navigated there — there's no "resume where I left off" jump.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ===== FIELD NOTE: CORRECTIONS ===== -->
+  <section class="panel field-note">
+    <span class="tag">Field note</span>
+    <h2>Verification history</h2>
+    <p class="sub">What the verification pass against source caught, and what's since changed as a result — kept here as a record rather than deleted, since it's the reason to check source instead of only reading docs.</p>
+    <ol class="corrections">
+      <li><span class="pill">✓ fixed 2026-08-26</span> <b>The biggest one:</b> "Use for What-If Analysis" and 🗑️ Delete (Experimentation &amp; Model Selection) were <b>not</b> part of <code>what_if.py</code> / <code>what_if_service.py</code> at all, even though <code>flow.md</code> §4b grouped them with the What-If backend surface. They lived in a fully separate router, <code>backend/app/api/routes/overview.py</code>, backed by <code>overview_service.py</code>, called via <code>api/overview.ts</code> — not <code>api/whatIf.ts</code>. That router has since been deleted; all four experiment endpoints now live in <code>what_if.py</code> — see Table 04.</li>
+      <li>PI Tag Mapping's save function is named <code>commit_mapping</code> in <code>what_if_service.py</code> — not <code>commit_pi_mapping</code>, which is the name you'd guess from the sheet. (Still true — unaffected by the above.)</li>
+      <li><code>commit_mapping</code> is the one <code>commit_*</code> function that isn't a pure pass-through write: it runs <code>wizard.normalize_pi_df()</code> on the edited rows before persisting them.</li>
+      <li>The four embedded Model Development phases (Connect Data / Data Health / AI Feature Discovery / Build Model) never call <code>api/whatIf.ts</code> at all — they use their own pre-existing domain files (<code>datasets.ts</code>, <code>preprocess.ts</code>, <code>featureSelection.ts</code>, <code>training.ts</code>), since those pages are reused verbatim, unmodified, from the standalone pipeline. Easy to assume everything under What-If Setup goes through one API file — it doesn't.</li>
+      <li><code>ModelConfigTab.tsx</code>'s "Configure Model" / "Define Formula" actions chain two calls, not one: they save via <code>commitModelMapping</code> first (on its success callback), <em>then</em> navigate to the target phase — the mapping is always persisted before Feature Discovery or the Formula Editor opens.</li>
+      <li><span class="pill">✓ fixed 2026-08-26</span> A fully separate dead vertical slice was also found and removed in the same pass: <code>predict.py</code>/<code>predict_service.py</code>/<code>schemas/predict.py</code>/<code>api/predict.ts</code> had zero live callers anywhere (its only frontend caller, <code>Predict/PredictPage.tsx</code>, had already been deleted). Along with it, four reused pipeline pages (<code>UploadPage</code>, <code>PreprocessPage</code>, <code>FinalApply</code>, <code>TrainPage</code>) each had a dead <code>navigate('/preprocess'|'/feature-selection'|'/train'|'/predict')</code> fallback pointing at standalone routes that no longer exist in <code>routes.tsx</code> — their <code>onContinue</code> prop is now required instead of optional-with-fallback.</li>
+    </ol>
+  </section>
+
+  <!-- ===== TABLE 01: WELCOME ===== -->
+  <section class="panel">
+    <span class="tag">Table 01</span>
+    <h2>Welcome</h2>
+    <p class="sub"><code>OverviewPage.tsx</code> (component <code>WhatIfOverviewPage</code>, L129)</p>
+    <div class="tablewrap">
+      <table class="ref">
+        <thead><tr><th>Action</th><th>Frontend</th><th>api/*.ts</th><th>Route</th><th>Service</th><th>src/</th></tr></thead>
+        <tbody>
+          <tr><td>Status tiles</td><td><code>OverviewPage.tsx:129</code></td><td><code>getConfigStatus</code> :31<br><code>getModelsStatus</code> :131<br><code>getTargetSection</code> :202</td><td><code>config_status</code> :56<br><code>models_status</code> :222<br><code>config_target_section</code> :187</td><td><code>get_config_status</code> :187<br><code>get_models_status</code> :691<br><code>get_target_section</code> :448</td><td><code>config_io</code>, <code>model_status</code></td></tr>
+          <tr><td>+ New Case</td><td><code>createCaseMutation</code> :185<br><code>submitNewCase</code> :204</td><td><code>createCase</code> (<code>api/cases.ts</code>)</td><td><code>cases_create</code> :37</td><td><code>whatif_case_service.create_case</code></td><td><code>data/database.py</code> (<code>whatif_cases</code>)</td></tr>
+          <tr><td>Switch / Resume Case</td><td><code>openCaseMutation</code> :195<br><code>switchToCase</code> :175</td><td><code>listCases</code> / <code>openCase</code> (<code>api/cases.ts</code>)</td><td><code>cases_list</code> :32<br><code>cases_open</code> :42</td><td><code>whatif_case_service.list_cases</code> / <code>open_case</code></td><td><code>data/database.py</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== TABLE 02: SYSTEM CONFIG ===== -->
+  <section class="panel">
+    <span class="tag">Table 02</span>
+    <h2>What-If Setup → System Config</h2>
+    <p class="sub">3 sub-tabs, opens here by default; each save auto-advances to the next.</p>
+    <div class="tablewrap">
+      <table class="ref">
+        <thead><tr><th>Sub-tab</th><th>Frontend save</th><th>api/*.ts</th><th>Route</th><th>Service</th><th>src/</th></tr></thead>
+        <tbody>
+          <tr><td>Process Flow Order</td><td><code>SectionOrderEditor.tsx:113</code></td><td><code>commitSectionOrder</code> :157</td><td><code>config_commit_section_order</code> :132</td><td><code>commit_section_order</code> :375</td><td><code>config_io</code></td></tr>
+          <tr class="discrepancy"><td>PI Tag Mapping</td><td><code>PiTagMappingEditor.tsx:137</code><br>wizard: <code>PlantConfigWizard.tsx:38</code></td><td><code>commitMapping</code> :71<br><code>generateMapping</code> :66</td><td><code>config_commit_mapping</code> :82<br><code>wizard_generate_mapping</code> :75</td><td><code>commit_mapping</code> :279 <span class="pill">not commit_pi_mapping</span><br><code>generate_mapping</code> :246</td><td><code>config_io</code> + <code>wizard.normalize_pi_df()</code> (called inside <code>commit_mapping</code>)</td></tr>
+          <tr><td>Input Tag Config (MV/DV/CV)</td><td><code>MvDvCvTagListEditor.tsx:162</code></td><td><code>commitMvDvCvTaglist</code> :167</td><td><code>config_commit_mvdvcv_taglist</code> :144</td><td><code>commit_mvdvcv_taglist</code> :389</td><td><code>config_io</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figcaption>Every <code>commit_*</code> service function reloads the current on-disk <code>Config_file.xlsx</code>, replaces only its own sheet, and rewrites all 8 sheets in one atomic call — a per-section save can't clobber another section's data.</figcaption>
+  </section>
+
+  <!-- ===== TABLE 03: MODEL CONFIG - MODEL DEVELOPMENT ===== -->
+  <section class="panel">
+    <span class="tag">Table 03</span>
+    <h2>Model Config → Model Development</h2>
+    <p class="sub">A 5-phase stepper, freely revisitable. Phases 1, 2, 4, 5 are the embedded pipeline pages, reused verbatim — <b>they never touch <code>api/whatIf.ts</code></b>.</p>
+    <div class="tablewrap">
+      <table class="ref">
+        <thead><tr><th>Phase</th><th>Frontend</th><th>API domain</th><th>Route file</th><th>src/</th></tr></thead>
+        <tbody>
+          <tr><td>1. Connect Data</td><td><code>UploadPage.tsx</code></td><td><code>api/datasets.ts</code></td><td><code>routes/datasets.py</code></td><td><code>src/data/</code></td></tr>
+          <tr><td>2. Data Health</td><td><code>PreprocessPage.tsx</code></td><td><code>api/preprocess.ts</code></td><td><code>routes/preprocess.py</code></td><td><code>src/data/</code></td></tr>
+          <tr><td>3. Model Definition</td><td><code>ModelMappingEditor.tsx:390</code><br><code>FormulaEditor.tsx</code> (First-Principle rows)</td><td><code>commitModelMapping</code> :81<br><code>commitFormulas</code> :97 / <code>validateFormula</code> :105</td><td><code>config_commit_model_mapping</code> :94<br><code>config_commit_formulas</code> :106 / <code>config_validate_formula</code> :113</td><td><code>config_io</code>; <code>commit_formulas</code> :344 calls <code>_sync_formula_inputs</code> :317; <code>formula_eval</code></td></tr>
+          <tr><td>4. AI Feature Discovery</td><td><code>FeatureSelectionPage.tsx</code></td><td><code>api/featureSelection.ts</code></td><td><code>routes/feature_selection.py</code></td><td><code>src/feature_selection/</code></td></tr>
+          <tr><td>5. Build Model</td><td><code>TrainPage.tsx</code></td><td><code>api/training.ts</code></td><td><code>routes/training.py</code></td><td><code>src/training/</code>, <code>src/models/</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figcaption>Finishing phase 5 jumps to Experimentation &amp; Model Selection (Table 04). Its own in-progress state (target/candidates, method selections, running job id) restores from <code>localStorage</code> synchronously on mount rather than in a <code>useEffect</code>, to dodge a React Strict Mode double-invoke race. Phase 5's own submit-and-poll mechanism (the async job pattern behind "Train") is diagrammed in the Blueprint's Fig. 05.</figcaption>
+  </section>
+
+  <!-- ===== TABLE 04: EXPERIMENTATION & MODEL SELECTION ===== -->
+  <section class="panel">
+    <span class="tag">Table 04</span>
+    <h2>Model Config → Experimentation &amp; Model Selection</h2>
+    <p class="sub">Reuses <code>SoftSensor/ExperimentHistoryPage.tsx</code>. <span class="pill">merged into what_if.py — 2026-08-26</span></p>
+    <div class="tablewrap">
+      <table class="ref">
+        <thead><tr><th>Action</th><th>Frontend</th><th>api/*.ts</th><th>Route</th><th>Service</th><th>src/</th></tr></thead>
+        <tbody>
+          <tr><td>List experiments</td><td><code>ExperimentHistoryPage.tsx:71</code> (<code>overviewQuery</code>)</td><td><code>getOverview</code> — <code>api/whatIf.ts:329</code></td><td><code>experiments_overview</code> :293</td><td><code>get_experiments_overview</code> :1051</td><td><code>data/database.py</code>, <code>persistence/model_store.py</code></td></tr>
+          <tr><td>Use for What-If Analysis</td><td><code>ExperimentHistoryPage.tsx:74</code> (<code>selectMutation</code>)</td><td><code>selectModelForParameter</code> — <code>api/whatIf.ts:337</code></td><td><code>experiments_select_model</code> :298</td><td><code>select_model_for_parameter</code> :1089</td><td><code>data/database.py</code> (<code>whatif_model_selection</code> upsert)</td></tr>
+          <tr><td>Clear selection (✓ pill)</td><td><code>ExperimentHistoryPage.tsx:79/80</code> (<code>clearMutation</code>)</td><td><code>clearModelSelection</code> — <code>api/whatIf.ts:342</code></td><td><code>experiments_clear_selection</code> :308</td><td><code>clear_experiment_selection</code> :1107</td><td><code>data/database.py</code></td></tr>
+          <tr><td>🗑️ Delete</td><td><code>ExperimentHistoryPage.tsx:83/88</code></td><td><code>deleteModel</code> — <code>api/whatIf.ts:349</code></td><td><code>experiments_delete_model</code> :315</td><td><code>delete_experiment_model</code> :1114</td><td><code>src/persistence</code> (disk delete) + <code>database.py</code> registry/selection cleanup</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figcaption>All four routes now live under the same <code>/what-if</code> prefix, in <code>what_if.py</code>/<code>what_if_service.py</code>/<code>schemas/what_if.py</code> — this used to be a separate <code>overview.py</code> router (see the field note above for what that looked like and why it moved). The response schema was renamed <code>OverviewResponse</code> → <code>ExperimentsOverviewResponse</code> in the move, to read clearly alongside the other What-If schemas.</figcaption>
+  </section>
+
+  <!-- ===== TABLE 05: ADVANCED / KALMAN ===== -->
+  <section class="panel">
+    <span class="tag">Table 05</span>
+    <h2>Model Config → Advanced (dedicated Kalman training)</h2>
+    <p class="sub">The fallback path for any parameter with no Selected experiment.</p>
+    <div class="tablewrap">
+      <table class="ref">
+        <thead><tr><th>Element</th><th>Frontend</th><th>api/*.ts</th><th>Route</th><th>Service</th><th>src/</th></tr></thead>
+        <tbody>
+          <tr><td>Upload training data</td><td><code>TrainingDataUpload.tsx</code></td><td><code>uploadTrainingData</code> :123</td><td><code>training_data_upload</code> :214</td><td><code>upload_training_data</code></td><td><code>paths</code></td></tr>
+          <tr><td>Model status</td><td><code>ModelStatusPanel.tsx</code></td><td><code>getModelsStatus</code> :131</td><td><code>models_status</code> :221</td><td><code>get_models_status</code> :691</td><td><code>model_status</code></td></tr>
+          <tr><td>Train</td><td><code>ModelStatusPanel.tsx</code></td><td><code>trainModels</code> :136</td><td><code>models_train</code> :226</td><td><code>train_models</code> :779 → <code>_run_training_subprocess</code> :728</td><td>subprocess → <code>Scripts/Model_development_and_static_whatif_testing_updated.py</code></td></tr>
+          <tr><td>Accuracy summary</td><td><code>AccuracySummaryPanel.tsx</code></td><td><code>getAccuracySummary</code> :141</td><td><code>models_accuracy_summary</code> :209</td><td><code>get_accuracy_summary</code> :614</td><td><code>paths</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== TABLE 06: WHAT-IF CONFIG ===== -->
+  <section class="panel">
+    <span class="tag">Table 06</span>
+    <h2>What-If Setup → What-If Config</h2>
+    <p class="sub">3 sub-tabs, all optional — Constraints, User Inputs, Results Layout.</p>
+    <div class="tablewrap">
+      <table class="ref">
+        <thead><tr><th>Sub-tab</th><th>Frontend save</th><th>api/*.ts</th><th>Route</th><th>Service</th><th>src/</th></tr></thead>
+        <tbody>
+          <tr><td>Constraints</td><td><code>ConstraintsEditor.tsx:147</code></td><td><code>commitConstraints</code> :177</td><td><code>config_commit_constraints</code> :156</td><td><code>commit_constraints</code> :403</td><td><code>config_io</code></td></tr>
+          <tr><td>User Inputs</td><td><code>UserInputsEditor.tsx:119</code></td><td><code>commitUserInputs</code> :187</td><td><code>config_commit_user_inputs</code> :168</td><td><code>commit_user_inputs</code> :417</td><td><code>config_io</code></td></tr>
+          <tr><td>Results Layout</td><td><code>ColumnOrderEditor.tsx:112</code></td><td><code>commitColumnOrder</code> :197</td><td><code>config_commit_column_order</code> :180</td><td><code>commit_column_order</code> :431</td><td><code>config_io</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== TABLE 07: WHAT-IF ANALYSIS ===== -->
+  <section class="panel">
+    <span class="tag">Table 07</span>
+    <h2>What-If Analysis</h2>
+    <p class="sub">One flowing page, gated behind readiness. See the Blueprint's Fig. 03/04 for the compute step's full trace and engine dispatch.</p>
+    <div class="tablewrap">
+      <table class="ref">
+        <thead><tr><th>Step</th><th>Frontend</th><th>api/*.ts</th><th>Route</th><th>Service</th><th>src/</th></tr></thead>
+        <tbody>
+          <tr><td>Target Section</td><td><code>TargetSectionSelector.tsx</code></td><td><code>getTargetSection</code> :202</td><td><code>config_target_section</code> :187</td><td><code>get_target_section</code> :448</td><td><code>config_io</code></td></tr>
+          <tr><td>Tag Source</td><td><code>TagSourcePanel.tsx</code> (prop-driven; fetched by <code>DashboardPage.tsx:38</code>)</td><td><code>getTagOptions</code> :248</td><td><code>dashboard_tag_options</code> :236</td><td><code>get_tag_options</code> :821</td><td>—</td></tr>
+          <tr><td>Timestamp &amp; Baseline</td><td><code>TimestampSelector.tsx</code>, <code>BaselineValuesPanel.tsx:14</code></td><td><code>getDates</code> :256 / <code>getTimestamps</code> :261<br><code>getBaseline</code> :268</td><td><code>dashboard_dates</code> :243 / <code>dashboard_timestamps</code> :248<br><code>dashboard_baseline</code> :253</td><td><code>get_dates</code> :869 / <code>get_timestamps</code> :875<br><code>get_baseline</code> :885</td><td><code>historian</code></td></tr>
+          <tr><td>Simulation Overrides</td><td><code>SimulationOverridesPanel.tsx</code> (pure UI — state lives in <code>DashboardPage.tsx</code>)</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>🚀 Compute</td><td><code>DashboardPage.tsx:107</code> (<code>runCompute</code>)</td><td><code>runScenario</code> :282</td><td><code>dashboard_compute</code> :263</td><td><code>run_scenario</code> :905</td><td><code>engine</code>, <code>kpi</code>, <code>historian</code></td></tr>
+          <tr><td>KPI Cards / Actual vs Estimated</td><td><code>KpiCardsRow.tsx</code>, <code>ActualVsEstimatedTable.tsx</code></td><td><code>downloadBlob</code> :311 (CSV export)</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>Validation Filters</td><td><code>ValidationFiltersPanel.tsx</code></td><td><code>runValidationFilter</code> :287<br><code>exportScenarioCsv</code> :298</td><td><code>dashboard_validation_filter</code> :270<br><code>dashboard_export_csv</code> :277</td><td><code>run_validation_filter</code> :983<br><code>export_scenario_csv</code> :1011</td><td><code>kpi</code>, <code>historian</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span>Verified against source, 2026-08-25 — updated 2026-08-26</span>
+    <span>companion to: What-If Studio Blueprint, Complete Architecture Map</span>
+    <span>sources: docs/flow.md, docs/ARCHITECTURE.md</span>
+  </footer>
+
+</div>

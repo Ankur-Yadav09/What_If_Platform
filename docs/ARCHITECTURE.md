@@ -36,28 +36,30 @@ This is why the repo could support two very different frontends historically (a 
 
 ## 2. Backend pattern: routes → schemas → services → src
 
-Every backend feature follows the same 4-layer flow. Worked example — **Predict**:
+Every backend feature follows the same 4-layer flow. Worked example — **What-If's scenario compute**:
 
-1. **`backend/app/api/routes/predict.py`** — thin FastAPI route. Parses/validates the request, calls exactly one service function, returns its result.
-2. **`backend/app/schemas/predict.py`** — Pydantic models for the request/response shape (`PredictRequest`, `PredictResponse`).
-3. **`backend/app/services/predict_service.py`** — the orchestrator. Loads whatever it needs (model, dataset), calls into `src/`, reshapes the result into a plain dict/response model. This is where "business logic wiring" lives — not business logic itself.
-4. **`src/persistence/model_store.py`**, **`src/models/wrappers.py`**, etc. — the actual math/IO. Zero knowledge that a web framework exists.
+1. **`backend/app/api/routes/what_if.py`**'s `dashboard_compute()` — thin FastAPI route. Parses/validates the request, calls exactly one service function, returns its result.
+2. **`backend/app/schemas/what_if.py`** — Pydantic models for the request/response shape (`WhatIfScenarioRequest`, `WhatIfScenarioResponse`).
+3. **`backend/app/services/what_if_service.py`**'s `run_scenario()` — the orchestrator. Loads the historian + config for the active case, calls into `src/`, reshapes the result into a plain dict/response model. This is where "business logic wiring" lives — not business logic itself.
+4. **`src/whatif/engine.py`**'s `whatif_analysis()`, plus `src/whatif/kpi.py`, `historian.py` — the actual math/IO. Zero knowledge that a web framework exists.
 
 ```mermaid
 graph LR
-    R["routes/predict.py<br/>thin, HTTP-only"] --> Sc["schemas/predict.py<br/>PredictRequest / PredictResponse"]
-    Sc --> Se["services/predict_service.py<br/>orchestration, business wiring"]
-    Se --> C["src/persistence/model_store.py<br/>src/models/wrappers.py<br/>actual math / IO"]
+    R["routes/what_if.py<br/>dashboard_compute() — thin, HTTP-only"] --> Sc["schemas/what_if.py<br/>WhatIfScenarioRequest / Response"]
+    Sc --> Se["services/what_if_service.py<br/>run_scenario() — orchestration, business wiring"]
+    Se --> C["src/whatif/engine.py<br/>src/whatif/kpi.py, historian.py<br/>actual math / IO"]
 ```
 
 `backend/app/main.py` wires every route module together:
 ```python
-app.include_router(predict.router, prefix="/api")
 app.include_router(what_if.router, prefix="/api")
+app.include_router(datasets.router, prefix="/api")
 # ...
 ```
 
-**Long-running work doesn't block the request.** Training and feature selection use `backend/app/jobs/manager.py` — a `ThreadPoolExecutor`-backed singleton (`job_manager`). The route calls `job_manager.submit(fn, ...)`, gets a `job_id` back immediately, and the frontend polls `GET /api/jobs/{id}` (via the `useJobPolling` hook) until `done: true`. Fast operations (predict, What-If scenario compute) skip this and respond synchronously.
+§5 below traces this exact request end to end, hop by hop.
+
+**Long-running work doesn't block the request.** Training and feature selection use `backend/app/jobs/manager.py` — a `ThreadPoolExecutor`-backed singleton (`job_manager`). The route calls `job_manager.submit(fn, ...)`, gets a `job_id` back immediately, and the frontend polls `GET /api/jobs/{id}` (via the `useJobPolling` hook) until `done: true`. Fast operations (What-If scenario compute) skip this and respond synchronously.
 
 ```mermaid
 sequenceDiagram
@@ -86,7 +88,7 @@ sequenceDiagram
 
 ## 3. Frontend pattern: page → api client → axios → backend
 
-- **`frontend/src/api/*.ts`** — one file per backend domain (`predict.ts`, `training.ts`, `whatIf.ts`, ...). Each is a thin, typed wrapper around the shared `apiClient` (`api/client.ts` — axios, `baseURL: '/api'`). In dev, `vite.config.ts` proxies `/api` to `http://localhost:8010`.
+- **`frontend/src/api/*.ts`** — one file per backend domain (`training.ts`, `whatIf.ts`, ...). Each is a thin, typed wrapper around the shared `apiClient` (`api/client.ts` — axios, `baseURL: '/api'`). In dev, `vite.config.ts` proxies `/api` to `http://localhost:8010`.
 - **`frontend/src/pages/<Feature>/<Feature>Page.tsx`** — a page composes: React Query `useQuery`/`useMutation` calls into the API layer, local `useState` for form/UI state, and shared components from `frontend/src/components/` (`Callout`, `DataTable`, `StatusCard`, `Tabs`, `MultiSelectDropdown`, `LineChart`/`ScatterChart`, ...) for layout.
 - **`frontend/src/state/*Context.tsx`** — the only "global" client state: small `localStorage`-backed React Contexts for the few things that must survive page navigation (active dataset, active project, the What-If wizard's generated tag list + active Target Section, and `ActiveCaseContext` — the active case_id, read directly from `localStorage` by `api/client.ts`'s request interceptor since interceptors run outside React).
 - **`frontend/src/layout/Sidebar.tsx`** + **`routes.tsx`** — the navigation shell. Each sidebar entry maps 1:1 to a route.
@@ -103,7 +105,7 @@ What-If Studio is the product — the only thing with a sidebar entry and a land
 |---|---|---|
 | How it's reached | Only via What-If Setup → Model Config → Model Development (5-phase stepper) | Sidebar: Welcome → What-If Setup (System Config / Model Config / What-If Config) → What-If Analysis |
 | Frontend pages | `pages/Upload/`, `Preprocess/`, `FeatureSelection/`, `Train/` — reused verbatim as 4 of Model Development's 5 phases (the 5th, Model Definition, is `ModelMappingEditor.tsx`); their standalone routes were removed as dead code, along with the two pages that had no embedded caller at all (`SoftSensor/OverviewPage.tsx`, `Predict/PredictPage.tsx`, now deleted) | `pages/WhatIf/` — `WhatIfSetupPage.tsx` hosts 3 top-level tabs: `SystemConfigTab.tsx` (Process Flow Order / PI Tag Mapping / Input Tag Configuration), `ModelConfigTab.tsx` (Model Development's 5-phase stepper, embedding the pipeline on the left, plus Experimentation & Model Selection reusing `SoftSensor/ExperimentHistoryPage.tsx`), `WhatIfConfigTab.tsx` (Constraints/User Inputs/Results Layout). `DashboardPage.tsx` is the single flowing "What-If Analysis" page. |
-| Backend routes | `datasets.py`, `preprocess.py`, `feature_selection.py`, `training.py`, `predict.py` | `what_if.py` — case CRUD, config CRUD (8 sheets), wizard, training-data upload, model training/status, dashboard compute/validation; every route takes a `case_id` query param |
+| Backend routes | `datasets.py`, `preprocess.py`, `feature_selection.py`, `training.py` | `what_if.py` — case CRUD, config CRUD (8 sheets), wizard, training-data upload, model training/status, dashboard compute/validation, experiments overview/select/delete; every route takes a `case_id` query param |
 | Core `src/` logic | `src/data/`, `src/feature_selection/`, `src/training/`, `src/models/`, `src/evaluation/` | `src/whatif/` (`config_io.py`, `historian.py`, `engine.py`, `wizard.py`, `model_status.py`, `kpi.py`, `plants/` — the plant-specific physics plugin package) |
 | Persistence | `dashboard.db` (SQLite) + `saved_models/` (pickled models/scalers) — datasets, preprocessing projects (`artifacts/<project_id>/`), and the model registry are all case-scoped (see below) | `Data/<case_id>/Config_file.xlsx` (8 sheets), `Results/<case_id>/Model/*.pkl`, `Results/<case_id>/Raw_data_plus_simulated_data.xlsx` — a separate, file-based world, deliberately **mostly** kept apart from `dashboard.db` (see the one narrow bridge below), and isolated per **case** (`"default"` = the original flat layout, zero migration) |
 | Reference implementation | — (built directly against this architecture) | `Scripts/whatif_runner.py`/`Whatif_streamlit_dashboard.py` and their `_updated` counterparts — **read-only** legacy Streamlit apps `src/whatif/` was ported from (the generalized dependency-graph engine and 8-sheet config schema came from the `_updated` versions). Never imported, never modified. **Exception**: `Scripts/Model_development_and_static_whatif_testing_updated.py` is not reference-only — it's the actual dedicated-Kalman-training implementation, invoked as a subprocess by `what_if_service._run_training_subprocess()` (see `flow.md` §4b), and gets bug-fixed like any other production file when needed. |
@@ -112,7 +114,7 @@ Both surfaces use the exact same routes→schemas→services→src backend layer
 
 **The one deliberate bridge between the two persistence worlds:** Experiment History (`frontend/src/pages/SoftSensor/ExperimentHistoryPage.tsx`, reused inside Model Config's "Experimentation & Model Selection" tab) lets a user mark one model-development experiment (from `dashboard.db`'s `model_registry` / `saved_models/`) as **"Selected for What-If Analysis"** for a given Predicted Parameter. That selection is recorded in a `dashboard.db` table, `whatif_model_selection(parameter, model_name, selected_at, case_id)`. `src/whatif/engine.py::predict_and_update_with_soft_sensor_model()` checks this table before falling back to the dedicated Kalman filter for that parameter — see §5/`flow.md` for the exact dispatch order. This is intentionally the *only* place the two persistence worlds touch; everything else about their storage stays fully separate.
 
-**Case isolation crosses that same bridge deliberately, once.** Since the two surfaces otherwise keep separate persistence, the natural boundary would leave the pipeline's side (`model_registry`, `saved_models/`) global while only What-If's own config/Kalman models were per-case — but a selection made in one case pointing at a model trained for a different case would be meaningless. So `model_registry` and `whatif_model_selection` both carry a `case_id` column, and `saved_models/<case_id>/<model_name>/` mirrors `Results/<case_id>/Model/`'s per-case layout. Deleting an experiment (Experiment History's 🗑️ button, `DELETE /api/overview/models/{model_name}`) removes its `saved_models/` folder and registry row **and** clears any `whatif_model_selection` row pointing at it, so a case can never end up with a selection referencing a model that no longer exists. Isolation goes one step further than just the model layer: uploaded datasets (`dashboard.db`'s `datasets` table, `UNIQUE(case_id, name)`) and Feature Selection's `artifacts/<project_id>/` projects are case-scoped too — a new case starts with a genuinely blank Connect Data/Data Health/Feature Discovery, not a shared pool of every other case's uploads. See `flow.md` §2/§3a for the full mechanism (`ActiveCaseContext`, the `case_id` request interceptor, `whatif_case_service.py`).
+**Case isolation crosses that same bridge deliberately, once.** Since the two surfaces otherwise keep separate persistence, the natural boundary would leave the pipeline's side (`model_registry`, `saved_models/`) global while only What-If's own config/Kalman models were per-case — but a selection made in one case pointing at a model trained for a different case would be meaningless. So `model_registry` and `whatif_model_selection` both carry a `case_id` column, and `saved_models/<case_id>/<model_name>/` mirrors `Results/<case_id>/Model/`'s per-case layout. Deleting an experiment (Experiment History's 🗑️ button, `DELETE /api/what-if/experiments/{model_name}`) removes its `saved_models/` folder and registry row **and** clears any `whatif_model_selection` row pointing at it, so a case can never end up with a selection referencing a model that no longer exists. Isolation goes one step further than just the model layer: uploaded datasets (`dashboard.db`'s `datasets` table, `UNIQUE(case_id, name)`) and Feature Selection's `artifacts/<project_id>/` projects are case-scoped too — a new case starts with a genuinely blank Connect Data/Data Health/Feature Discovery, not a shared pool of every other case's uploads. See `flow.md` §2/§3a for the full mechanism (`ActiveCaseContext`, the `case_id` request interceptor, `whatif_case_service.py`).
 
 ```mermaid
 graph LR

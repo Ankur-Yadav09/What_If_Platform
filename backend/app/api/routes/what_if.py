@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from backend.app.api.deps import require_valid_case_id
@@ -281,3 +281,38 @@ def dashboard_export_csv(body: schemas.WhatIfExportCsvRequest) -> Response:
         content=data, media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+# ---------------------------------------------------------------------------
+# Experiments overview (Experimentation & Model Selection tab) — moved here
+# from the old standalone Soft Sensor Module's overview.py now that
+# ExperimentHistoryPage.tsx is only ever reused inside What-If Studio.
+# ---------------------------------------------------------------------------
+
+@router.get("/experiments", response_model=schemas.ExperimentsOverviewResponse)
+def experiments_overview(case_id: str = Query("default")) -> schemas.ExperimentsOverviewResponse:
+    return what_if_service.get_experiments_overview(case_id)
+
+
+@router.post("/experiments/select", response_model=schemas.ExperimentsOverviewResponse)
+def experiments_select_model(
+    body: schemas.SelectModelRequest, case_id: str = Query("default")
+) -> schemas.ExperimentsOverviewResponse:
+    try:
+        return what_if_service.select_model_for_parameter(body.parameter, body.model_name, case_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/experiments/clear-selection", response_model=schemas.ExperimentsOverviewResponse)
+def experiments_clear_selection(
+    body: schemas.ClearSelectionRequest, case_id: str = Query("default")
+) -> schemas.ExperimentsOverviewResponse:
+    return what_if_service.clear_experiment_selection(body.parameter, case_id)
+
+
+@router.delete("/experiments/{model_name}", response_model=schemas.ExperimentsOverviewResponse)
+def experiments_delete_model(
+    model_name: str, case_id: str = Query("default")
+) -> schemas.ExperimentsOverviewResponse:
+    return what_if_service.delete_experiment_model(model_name, case_id)

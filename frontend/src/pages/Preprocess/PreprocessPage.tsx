@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { getDatasetPreview, listDatasets } from '../../api/datasets'
 import { getFeatureStats } from '../../api/preprocess'
 import { Callout } from '../../components/Callout'
@@ -17,16 +16,14 @@ interface PreprocessPageProps {
   // See UploadPage's hideStepper for why: avoids a duplicate progress
   // indicator when this page is embedded inside What-If Studio's tabs.
   hideStepper?: boolean
-  // See UploadPage's onContinue for why: when embedded, "Continue" must move
-  // to the next in-page Model Development phase instead of navigating to the
-  // standalone /feature-selection route. Model Development's next step after
-  // Data Health is Model Definition (not Feature Selection, unlike the
-  // standalone Soft Sensor workflow), so the button label differs too.
-  onContinue?: () => void
+  // PreprocessPage is only ever rendered embedded inside What-If Studio's
+  // Model Config tab now — "Continue" always moves to the next in-page
+  // Model Development phase (Model Definition), so this is required, not a
+  // fallback path.
+  onContinue: () => void
 }
 
-export function PreprocessPage({ hideStepper, onContinue }: PreprocessPageProps = {}) {
-  const navigate = useNavigate()
+export function PreprocessPage({ hideStepper, onContinue }: PreprocessPageProps) {
   const { activeDataset: datasetName, setActiveDataset: setDatasetName } = useActiveDataset()
   const [lastCleaned, setLastCleaned] = useState<CleaningResponse | null>(null)
 
@@ -159,14 +156,11 @@ export function PreprocessPage({ hideStepper, onContinue }: PreprocessPageProps 
                   </table>
                 </div>
                 <p className="caption" style={{ marginTop: '0.5rem' }}>
-                  Proceed to the <strong>Feature Selection</strong> page to choose X/Y columns, run feature
-                  selection, and finalize the train/test split.
+                  Proceed to <strong>Model Definition</strong> to map this dataset's columns to a Predicted
+                  Parameter before running feature selection.
                 </p>
-                <button
-                  style={{ marginTop: '0.75rem' }}
-                  onClick={() => (onContinue ? onContinue() : navigate('/feature-selection'))}
-                >
-                  {onContinue ? 'Continue to Model Definition →' : 'Continue to Feature Selection →'}
+                <button style={{ marginTop: '0.75rem' }} onClick={onContinue}>
+                  Continue to Model Definition →
                 </button>
               </>
             )}
