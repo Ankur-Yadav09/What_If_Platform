@@ -200,7 +200,10 @@ flowchart TD
    - A warning `Callout` if a hard constraint aborted the run.
    - **📊 Key Performance Indicators** (`KpiCardsRow.tsx`) — one card per KPI tag (from `derive_kpi_tags()`, see §6), actual vs. estimated with a colored delta.
    - **📈 Actual vs Estimated Scenario Output** (`ActualVsEstimatedTable.tsx`) — every parameter, with CSV export.
-   - **🔍 Validation Filters** (`ValidationFiltersPanel.tsx`, collapsed by default) — `POST /api/what-if/dashboard/validation-filter` to cross-check against similar historical snapshots by min/max range per tag, with a combined CSV export (`POST /api/what-if/dashboard/export-csv`).
+   - **🔍 Validation Filters** (`ValidationFiltersPanel.tsx`, collapsed by default) — `POST /api/what-if/dashboard/validation-filter` cross-checks against similar historical snapshots by min/max range per tag.
+     - The filterable tag list comes from **PI Tag Mapping**'s `Generalized Description` column (`wizard.normalize_pi_df()`), intersected with the historian's actual columns and scoped to the Target Section + everything upstream (`config_io.allowed_sections_upto()` / `kpi.scope_to_target_section()` — the same scoping `get_tag_options()` uses for its historian dropdown) — falls back to the old `kpi.derive_kpi_tags()` union (Model details + Constraints + plugin KPIs) if PI Tag Mapping is empty for the case.
+     - Results render **transposed**: one row per Parameter, one column per matched historical snapshot headed by that snapshot's own timestamp (capped to the first 50 snapshot columns on screen — `match_count` and export both stay uncapped), with the Parameter column frozen while scrolling through snapshots.
+     - `POST /api/what-if/dashboard/export-csv` produces a merged `.xlsx` in the same Parameter-per-row / snapshot-per-column shape (a transpose of the validation table left-merged onto the scenario table by Parameter), falling back to a plain CSV of just the scenario comparison when there are no matches to combine.
 
 ---
 

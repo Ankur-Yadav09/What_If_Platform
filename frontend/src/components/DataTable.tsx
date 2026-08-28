@@ -17,12 +17,18 @@ interface DataTableProps<T> {
   emptyMessage?: string
   /** When set, caps the visible height to roughly this many body rows and scrolls the rest vertically instead of growing the page. */
   maxVisibleRows?: number
+  /** Freezes the first column while the rest scrolls horizontally — the
+   * `.sticky-col` mechanism CorrelationMatrixView.tsx already applies by
+   * hand, wired through DataTable so callers with a dynamic column count
+   * (one column per historical snapshot, tag, etc.) don't have to
+   * hand-roll a table just to get a pinned row label. */
+  stickyFirstColumn?: boolean
 }
 
 const HEADER_ROW_HEIGHT = 42
 const BODY_ROW_HEIGHT = 42
 
-export function DataTable<T>({ columns, rows, keyFn, emptyMessage, maxVisibleRows }: DataTableProps<T>) {
+export function DataTable<T>({ columns, rows, keyFn, emptyMessage, maxVisibleRows, stickyFirstColumn }: DataTableProps<T>) {
   const [sortCol, setSortCol] = useState<number | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
@@ -72,6 +78,7 @@ export function DataTable<T>({ columns, rows, keyFn, emptyMessage, maxVisibleRow
             {columns.map((col, i) => (
               <th
                 key={col.header}
+                className={stickyFirstColumn && i === 0 ? 'sticky-col' : undefined}
                 onClick={col.sortValue ? () => handleSort(i) : undefined}
                 style={col.sortValue ? { cursor: 'pointer', userSelect: 'none' } : undefined}
                 title={col.sortValue ? `Sort by ${col.header}` : undefined}
@@ -89,8 +96,10 @@ export function DataTable<T>({ columns, rows, keyFn, emptyMessage, maxVisibleRow
         <tbody>
           {sortedRows.map((row) => (
             <tr key={keyFn(row)}>
-              {columns.map((col) => (
-                <td key={col.header}>{col.render(row)}</td>
+              {columns.map((col, i) => (
+                <td key={col.header} className={stickyFirstColumn && i === 0 ? 'sticky-col' : undefined}>
+                  {col.render(row)}
+                </td>
               ))}
             </tr>
           ))}

@@ -20,6 +20,8 @@ from typing import Any, Dict, List
 
 import pandas as pd
 from fastapi import HTTPException, UploadFile
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
 
 from src.data.database import (
     DEFAULT_CASE_ID,
@@ -996,13 +998,33 @@ def run_scenario(
 def run_validation_filter(
     body: schemas.ValidationFilterRequest, case_id: str = DEFAULT_CASE_ID
 ) -> schemas.ValidationFilterResponse:
-    """Default shortlist of filterable parameters: the same derived tag set
-    used for KPI tiles (see kpi.derive_kpi_tags's docstring for why there's
-    no clean upstream equivalent of the old hardcoded VALIDATION_TAGS list)."""
+    """Filterable tag list sourced from the PI Tag Mapping sheet's
+    Generalized Description column -- same normalize_pi_df() + historian-
+    column intersection get_tag_options() uses for its historian dropdown --
+    scoped to the target section and everything upstream of it (same
+    allowed_sections_upto/scope_to_target_section pair run_scenario() uses
+    for KPI tiles), so "+ Add Filter" only offers tags relevant to what's
+    currently in scope. Falls back to the old derive_kpi_tags union (Model
+    details + Constraints + plugin KPIs) if PI Tag Mapping is empty/
+    unconfigured for this case, so the panel never goes blank."""
     df = _load_historian(case_id)
     cfg = _load_config(case_id)
-    plugin = _load_plugin()
-    available = [t for t in kpi.derive_kpi_tags(cfg, plugin) if t in df.columns]
+    pi_norm = wizard.normalize_pi_df(cfg.pi_names_df)
+    seen: set[str] = set()
+    available: List[str] = []
+    for tag in pi_norm["Generalized Description"].tolist():
+        tag = str(tag).strip()
+        if tag and tag.lower() != "nan" and tag in df.columns and tag not in seen:
+            seen.add(tag)
+            available.append(tag)
+
+    if not available:
+        plugin = _load_plugin()
+        available = [t for t in kpi.derive_kpi_tags(cfg, plugin) if t in df.columns]
+
+    allowed_sections = config_io.allowed_sections_upto(cfg.section_order_list(), body.target_section)
+    section_map = kpi.build_param_section_map(cfg)
+    available = kpi.scope_to_target_section(available, section_map, allowed_sections)
     available = kpi.apply_preferred_order(available, cfg.display_order_df)
     filtered = df.copy()
     for tag in available:
@@ -1021,25 +1043,75 @@ def run_validation_filter(
     return schemas.ValidationFilterResponse(rows=rows, match_count=len(filtered))
 
 
+def _format_export_sheet(ws, df: pd.DataFrame) -> None:
+    """Bold + frozen header row, an autofilter (useful given Historical
+    Validation Matches can run to 100+ tag columns), and a column width
+    sized off the header/data so tag names aren't truncated to Excel's
+    default ~8-character column."""
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = ws.dimensions
+    for col_idx, col_name in enumerate(df.columns, start=1):
+        sample = df[col_name].astype(str).head(200).tolist()
+        width = max([len(str(col_name)), *(len(v) for v in sample)])
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(width + 2, 40)
+
+
 def export_scenario_csv(body: "schemas.WhatIfExportCsvRequest"):
-    """Merged scenario + validation CSV export. Simplified relative to the
-    original's pandas merge-on-Parameter (which joined a transposed scenario
-    table against a transposed validation table): here the two tables are
-    written as clearly-labeled sections in one CSV, since the client already
-    has both JSON payloads and a literal structural merge would be fragile to
-    reproduce exactly server-side without re-deriving the original's index
-    alignment assumptions."""
+    """Merged scenario + validation export, one row per Parameter. When
+    there are validation rows to combine, each matched historical snapshot
+    becomes its own column -- headed by that snapshot's own timestamp --
+    appended after Actual/Estimated/Change, via transposing the validation
+    table (rows=snapshot, cols=tag) to (rows=tag, cols=snapshot) and left-
+    merging it onto scenario_df on Parameter. Same shape as the original
+    Streamlit export's merge-on-Parameter of two transposed tables, just
+    produced directly rather than stacking two unrelated tables in one
+    flat CSV (which is what this used to do -- see git history). A
+    parameter that isn't a historian column at all (e.g. a purely-computed
+    KPI, like PRC_turbine_RPM) simply gets blank cells in every historical-
+    match column via the left-merge, rather than being dropped. Written as
+    a lightly-formatted .xlsx (bold/frozen header, autofilter, sized
+    columns) since a table this wide reads far better in Excel than a raw
+    CSV. Numeric values are rounded to 3 decimals -- the same "round for
+    readability" convention the on-screen tables already use
+    (ActualVsEstimatedTable.tsx's fmt / ValidationFiltersPanel.tsx's
+    round3). Falls back to a plain CSV of just the scenario comparison
+    when there's nothing to combine, since a single well-shaped table
+    doesn't need a workbook."""
     scenario_df = pd.DataFrame([r.model_dump() for r in body.rows])
     scenario_df.insert(0, "Selected Timestamp", body.timestamp)
+    scenario_df = scenario_df.rename(
+        columns={"parameter": "Parameter", "actual": "Actual", "estimated": "Estimated", "change": "Change"}
+    )
+    for col in ("Actual", "Estimated", "Change"):
+        if col in scenario_df.columns:
+            scenario_df[col] = pd.to_numeric(scenario_df[col], errors="coerce").round(3)
 
-    buf = io.StringIO()
-    scenario_df.to_csv(buf, index=False)
-    if body.validation_rows:
-        buf.write("\nHistorical Validation Matches\n")
-        pd.DataFrame(body.validation_rows).to_csv(buf, index=False)
+    if not body.validation_rows:
+        buf = io.StringIO()
+        scenario_df.to_csv(buf, index=False)
+        return buf.getvalue().encode("utf-8"), "text/csv", "WhatIf_Result.csv"
 
-    filename = "filtered_validation_data.csv" if body.validation_rows else "WhatIf_Result.csv"
-    return buf.getvalue().encode("utf-8"), "text/csv", filename
+    validation_df = pd.DataFrame(body.validation_rows)
+    validation_df["Timestamp"] = pd.to_datetime(validation_df["Timestamp"], errors="coerce").dt.strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    tag_cols = [c for c in validation_df.columns if c != "Timestamp"]
+    if tag_cols:
+        validation_df[tag_cols] = validation_df[tag_cols].apply(pd.to_numeric, errors="coerce").round(3)
+
+    by_snapshot = validation_df.set_index("Timestamp").T
+    by_snapshot.index.name = "Parameter"
+    merged = scenario_df.merge(by_snapshot, how="left", left_on="Parameter", right_index=True)
+
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        merged.to_excel(writer, sheet_name="Scenario vs Historical Matches", index=False)
+        _format_export_sheet(writer.sheets["Scenario vs Historical Matches"], merged)
+
+    media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return buf.getvalue(), media_type, "filtered_validation_data.xlsx"
 
 
 # ---------------------------------------------------------------------------

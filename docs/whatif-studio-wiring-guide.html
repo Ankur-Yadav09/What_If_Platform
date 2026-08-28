@@ -323,14 +323,14 @@
           <tr><td>Simulation Overrides</td><td><code>SimulationOverridesPanel.tsx</code> (pure UI — state lives in <code>DashboardPage.tsx</code>)</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
           <tr><td>🚀 Compute</td><td><code>DashboardPage.tsx:107</code> (<code>runCompute</code>)</td><td><code>runScenario</code> :282</td><td><code>dashboard_compute</code> :263</td><td><code>run_scenario</code> :905</td><td><code>engine</code>, <code>kpi</code>, <code>historian</code></td></tr>
           <tr><td>KPI Cards / Actual vs Estimated</td><td><code>KpiCardsRow.tsx</code>, <code>ActualVsEstimatedTable.tsx</code></td><td><code>downloadBlob</code> :311 (CSV export)</td><td>—</td><td>—</td><td>—</td></tr>
-          <tr><td>Validation Filters</td><td><code>ValidationFiltersPanel.tsx</code></td><td><code>runValidationFilter</code> :287<br><code>exportScenarioCsv</code> :298</td><td><code>dashboard_validation_filter</code> :270<br><code>dashboard_export_csv</code> :277</td><td><code>run_validation_filter</code> :983<br><code>export_scenario_csv</code> :1011</td><td><code>kpi</code>, <code>historian</code></td></tr>
+          <tr><td>Validation Filters</td><td><code>ValidationFiltersPanel.tsx</code> (transposed: Parameter rows, snapshot columns, capped to 50 on screen)</td><td><code>runValidationFilter</code> :288<br><code>exportScenarioCsv</code> :304</td><td><code>dashboard_validation_filter</code> :271<br><code>dashboard_export_csv</code> :278</td><td><code>run_validation_filter</code> :998<br><code>export_scenario_csv</code> :1061</td><td><code>kpi</code>, <code>wizard</code>, <code>config_io</code>, <code>historian</code></td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
   <footer>
-    <span>Verified against source, 2026-08-25 — updated 2026-08-26</span>
+    <span>Verified against source, 2026-08-25 — updated 2026-08-28</span>
     <span>companion to: What-If Studio Blueprint, Complete Architecture Map</span>
     <span>sources: docs/flow.md, docs/ARCHITECTURE.md</span>
   </footer>

@@ -10,14 +10,18 @@ interface ValidationFiltersPanelProps {
   targetSection?: string | null
 }
 
-// Rendering every matching row as real DOM (DataTable has no virtualization)
-// is fine for a genuinely narrowed-down filter result, but with NO filters
-// applied `run_validation_filter` returns the ENTIRE historian unfiltered
-// (~8000 rows on this plant) — that's what was actually making this panel
-// feel sluggish, not the surrounding re-renders. Cap what's rendered; the
-// true match_count is still shown, and export still uses the FULL,
-// un-capped `results.rows` the server already returned.
-const DISPLAY_ROW_CAP = 200
+// Rendering every matching snapshot as real DOM (DataTable has no
+// virtualization) is fine for a genuinely narrowed-down filter result, but
+// with NO filters applied `run_validation_filter` returns the ENTIRE
+// historian unfiltered (~8000 rows on this plant) — that's what was
+// actually making this panel feel sluggish, not the surrounding re-renders.
+// The table is transposed (one row per Parameter, one column per matched
+// snapshot -- see ValidationResultsTable below), so this now caps rendered
+// COLUMNS rather than rows; a wide table is harder to scan than a tall one,
+// so the cap is tighter than the old row cap was. The true match_count is
+// still shown, and export still uses the FULL, un-capped `results.rows` the
+// server already returned.
+const DISPLAY_COLUMN_CAP = 50
 
 interface FilterEntry {
   tag: string
@@ -49,9 +53,14 @@ function formatTimestamp(value: unknown): string {
 
 // Isolated from the filter-editing controls above it and memoized on its own
 // (props stay referentially stable while you're just editing filter
-// criteria — see DISPLAY_ROW_CAP's comment) so typing a Min/Max value or
+// criteria — see DISPLAY_COLUMN_CAP's comment) so typing a Min/Max value or
 // adding/removing a filter row never touches this table until you actually
 // click "Apply Filters".
+//
+// Transposed to match the merged export's shape (export_scenario_csv in
+// what_if_service.py): one row per Parameter, one column per matched
+// historical snapshot headed by that snapshot's own timestamp, instead of
+// one row per snapshot / one column per tag.
 const ValidationResultsTable = memo(function ValidationResultsTable({
   results,
   allTags,
@@ -66,18 +75,30 @@ const ValidationResultsTable = memo(function ValidationResultsTable({
   const [tagFilter, setTagFilter] = useState('')
 
   async function exportCsv() {
-    // Always every tag column, regardless of the on-screen column search
-    // below -- narrowing which columns you're looking at shouldn't narrow
-    // what you're allowed to export.
-    const blob = await exportScenarioCsv(timestamp, scenarioRows, results.rows)
-    downloadBlob(blob, 'filtered_validation_data.csv')
+    // Always every tag column, regardless of the on-screen row search below
+    // -- narrowing which parameters you're looking at shouldn't narrow what
+    // you're allowed to export.
+    const { blob, filename } = await exportScenarioCsv(timestamp, scenarioRows, results.rows)
+    downloadBlob(blob, filename)
   }
 
-  const visibleRows = results.rows.slice(0, DISPLAY_ROW_CAP)
+  const visibleSnapshots = results.rows.slice(0, DISPLAY_COLUMN_CAP)
 
   const visibleTags = tagFilter.trim()
     ? allTags.filter((t) => t.toLowerCase().includes(tagFilter.trim().toLowerCase()))
     : allTags
+
+  if (results.rows.length === 0) {
+    return (
+      <div style={{ marginTop: '1.5rem' }}>
+        <h4 style={{ margin: 0 }}>Correlated Historical Validation Sets</h4>
+        <p className="caption">No historical snapshots match these filters.</p>
+        <button className="chip" style={{ marginTop: '1rem' }} onClick={exportCsv}>
+          Export Unified Comparison &amp; Historical Validation Data (.CSV)
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div style={{ marginTop: '1.5rem' }}>
@@ -88,39 +109,40 @@ const ValidationResultsTable = memo(function ValidationResultsTable({
             type="text"
             value={tagFilter}
             onChange={(e) => setTagFilter(e.target.value)}
-            placeholder="Find a tag column…"
+            placeholder="Find a parameter…"
             style={{ maxWidth: 240 }}
           />
         )}
       </div>
       <p className="caption">
         {results.match_count} matching historical snapshot(s)
-        {results.match_count > DISPLAY_ROW_CAP &&
-          ` — showing the first ${DISPLAY_ROW_CAP} here; narrow your filters to see specific ones, or export for the full set.`}
-        {tagFilter.trim() && ` — showing ${visibleTags.length} of ${allTags.length} tag columns matching "${tagFilter}".`}
+        {results.match_count > DISPLAY_COLUMN_CAP &&
+          ` — showing the first ${DISPLAY_COLUMN_CAP} as columns here; narrow your filters to see specific ones, or export for the full set.`}
+        {tagFilter.trim() && ` — showing ${visibleTags.length} of ${allTags.length} parameter rows matching "${tagFilter}".`}
       </p>
       <DataTable
         columns={[
           {
-            header: 'Timestamp',
-            render: (r: Record<string, unknown>) => formatTimestamp(r.Timestamp),
-            sortValue: (r: Record<string, unknown>) => String(r.Timestamp ?? ''),
+            header: 'Parameter',
+            render: (tag: string) => tag,
+            sortValue: (tag: string) => tag,
           },
-          ...visibleTags.map((tag) => ({
-            header: tag,
-            render: (r: Record<string, unknown>) => fmt(r[tag]),
-            sortValue: (r: Record<string, unknown>) => {
-              const v = r[tag]
+          ...visibleSnapshots.map((snapshot) => ({
+            header: formatTimestamp(snapshot.Timestamp),
+            render: (tag: string) => fmt(snapshot[tag]),
+            sortValue: (tag: string) => {
+              const v = snapshot[tag]
               return typeof v === 'number' && Number.isFinite(v) ? v : null
             },
           })),
         ]}
-        rows={visibleRows}
-        keyFn={(r) => String(r.Timestamp)}
+        rows={visibleTags}
+        keyFn={(tag) => tag}
         maxVisibleRows={8}
+        stickyFirstColumn
       />
       <button className="chip" style={{ marginTop: '1rem' }} onClick={exportCsv}>
-        Export Unified Comparison &amp; Historical Validation Data (.CSV)
+        Export Unified Comparison &amp; Historical Validation Data ({results.rows.length > 0 ? '.XLSX' : '.CSV'})
       </button>
     </div>
   )

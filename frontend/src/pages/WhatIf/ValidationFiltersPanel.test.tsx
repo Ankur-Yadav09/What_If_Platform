@@ -31,12 +31,15 @@ describe('ValidationFiltersPanel', () => {
     expect(heading.textContent).not.toContain('🔍')
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Find a tag column…')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Find a parameter…')).toBeInTheDocument()
     })
     expect(screen.queryByPlaceholderText(/🔍/)).not.toBeInTheDocument()
 
+    // The mocked runValidationFilter result has a non-empty rows array, so
+    // the export goes through the combined-workbook (.xlsx) path -- see
+    // exportScenarioCsv's docstring in api/whatIf.ts.
     const exportButton = screen.getByRole('button', {
-      name: 'Export Unified Comparison & Historical Validation Data (.CSV)',
+      name: 'Export Unified Comparison & Historical Validation Data (.XLSX)',
     })
     expect(exportButton.textContent).not.toContain('📥')
   })

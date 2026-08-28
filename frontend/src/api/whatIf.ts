@@ -296,17 +296,23 @@ export async function runValidationFilter(
   return data
 }
 
+// Filename mirrors the backend's own choice (what_if_service.export_scenario_csv):
+// non-empty validation_rows -> the combined .xlsx workbook, otherwise a plain
+// .csv of just the scenario comparison. Keeping the two in lockstep here
+// avoids depending on parsing a Content-Disposition header out of the blob
+// response.
 export async function exportScenarioCsv(
   timestamp: string,
   rows: { parameter: string; actual: unknown; estimated: unknown; change: number | null }[],
   validationRows?: Record<string, unknown>[],
-): Promise<Blob> {
+): Promise<{ blob: Blob; filename: string }> {
   const { data } = await apiClient.post(
     '/what-if/dashboard/export-csv',
     { timestamp, rows, validation_rows: validationRows ?? null },
     { responseType: 'blob' },
   )
-  return data
+  const filename = validationRows && validationRows.length > 0 ? 'filtered_validation_data.xlsx' : 'WhatIf_Result.csv'
+  return { blob: data, filename }
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
