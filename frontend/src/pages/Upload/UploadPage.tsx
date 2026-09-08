@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { WorkflowStepper } from '../../components/WorkflowStepper'
 import { useActiveDataset } from '../../state/ActiveDatasetContext'
 import { AIRecommendationCard } from './AIRecommendationCard'
 import { DataPreviewSection } from './DataPreviewSection'
@@ -9,18 +8,13 @@ import { UseExistingDatasetTab } from './UseExistingDatasetTab'
 type SourceTab = 'existing' | 'new'
 
 interface UploadPageProps {
-  // Suppresses the standalone-workflow stepper when this page is embedded
-  // inside What-If Studio's Model Config tabs, which already show the same
-  // Connect Data -> ... progression via their own tab bar — showing both
-  // stacked on top of each other reads as two conflicting progress trackers.
-  hideStepper?: boolean
   // UploadPage is only ever rendered embedded inside What-If Studio's Model
   // Config tab now — "Continue" always moves to the next in-page phase
   // (Data Health), so this is required, not a fallback path.
   onContinue: () => void
 }
 
-export function UploadPage({ hideStepper, onContinue }: UploadPageProps) {
+export function UploadPage({ onContinue }: UploadPageProps) {
   const [tab, setTab] = useState<SourceTab>('existing')
   const { activeDataset: selectedName, setActiveDataset: setSelectedName } = useActiveDataset()
 
@@ -35,8 +29,6 @@ export function UploadPage({ hideStepper, onContinue }: UploadPageProps) {
         <h1>Connect Process Data</h1>
         <p className="caption">Connect historical process data to begin building an AI-powered Virtual Sensor.</p>
       </div>
-
-      {!hideStepper && <WorkflowStepper current="connect" />}
 
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <button

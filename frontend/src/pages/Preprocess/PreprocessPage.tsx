@@ -5,7 +5,6 @@ import { getFeatureStats } from '../../api/preprocess'
 import { Callout } from '../../components/Callout'
 import { StepHeading } from '../../components/StepHeading'
 import { Tabs } from '../../components/Tabs'
-import { WorkflowStepper } from '../../components/WorkflowStepper'
 import { useActiveDataset } from '../../state/ActiveDatasetContext'
 import { AutomatedPreprocessingTab } from './AutomatedPreprocessingTab'
 import { BasicPreprocessingTab } from './BasicPreprocessingTab'
@@ -13,9 +12,6 @@ import { DataUnderstandingTab } from './DataUnderstandingTab'
 import type { CleaningResponse } from '../../api/preprocess'
 
 interface PreprocessPageProps {
-  // See UploadPage's hideStepper for why: avoids a duplicate progress
-  // indicator when this page is embedded inside What-If Studio's tabs.
-  hideStepper?: boolean
   // PreprocessPage is only ever rendered embedded inside What-If Studio's
   // Model Config tab now — "Continue" always moves to the next in-page
   // Model Development phase (Model Definition), so this is required, not a
@@ -23,7 +19,7 @@ interface PreprocessPageProps {
   onContinue: () => void
 }
 
-export function PreprocessPage({ hideStepper, onContinue }: PreprocessPageProps) {
+export function PreprocessPage({ onContinue }: PreprocessPageProps) {
   const { activeDataset: datasetName, setActiveDataset: setDatasetName } = useActiveDataset()
   const [lastCleaned, setLastCleaned] = useState<CleaningResponse | null>(null)
 
@@ -52,8 +48,6 @@ export function PreprocessPage({ hideStepper, onContinue }: PreprocessPageProps)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <h1>Data Preprocessing</h1>
-
-      {!hideStepper && <WorkflowStepper current="health" />}
 
       <div>
         <StepHeading step={1} title="Load Dataset" />

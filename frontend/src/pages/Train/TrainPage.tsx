@@ -5,7 +5,6 @@ import { submitTraining } from '../../api/training'
 import { Callout } from '../../components/Callout'
 import { LineChart } from '../../components/LineChart'
 import { StepHeading } from '../../components/StepHeading'
-import { WorkflowStepper } from '../../components/WorkflowStepper'
 import { useJobPolling } from '../../hooks/useJobPolling'
 import { useActiveProject } from '../../state/ActiveProjectContext'
 import { ALGO_DEFAULTS, ALGO_FIELDS, ALGORITHMS, toApiHyperparameters } from './algorithmFields'
@@ -25,9 +24,6 @@ export interface GuidedTrainProps {
 }
 
 interface TrainPageProps {
-  // See UploadPage's hideStepper for why: avoids a duplicate progress
-  // indicator when this page is embedded inside What-If Studio's tabs.
-  hideStepper?: boolean
   // TrainPage is only ever rendered embedded inside What-If Studio's Model
   // Config tab now — "Continue" always stays inside What-If Studio
   // (Experimentation & Model Selection), so this is required, not a
@@ -36,7 +32,7 @@ interface TrainPageProps {
   guided?: GuidedTrainProps
 }
 
-export function TrainPage({ hideStepper, onContinue, guided }: TrainPageProps) {
+export function TrainPage({ onContinue, guided }: TrainPageProps) {
   const queryClient = useQueryClient()
   const { activeProject: projectId, setActiveProject: setProjectId } = useActiveProject()
   const [algorithm, setAlgorithm] = useState<string>('DAE')
@@ -77,8 +73,6 @@ export function TrainPage({ hideStepper, onContinue, guided }: TrainPageProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <h1>Train Model</h1>
-
-      {!hideStepper && <WorkflowStepper current="build" />}
 
       {guided && (
         <Callout variant="info">

@@ -174,8 +174,7 @@ this feature.
 
 **Feature Quality (0–100)** — `0.50·VIF_score + 0.30·Missing_score + 0.20·Variance_score`, each a
 step-function bucketing of the raw value (e.g. VIF ≤5→100, ≤10→80, ≤20→50, ≤30→20, else 0). Retained as a
-displayed diagnostic and as the VIF gate's input, but excluded from Final Score by weight
-(`FS_WEIGHT_FEATURE_QUALITY = 0.00` — kept in config only for import compatibility).
+displayed diagnostic and as the VIF gate's input, but excluded entirely from the Final Score.
 
 **Stability Score (0–100)** — bootstrap-resampling robustness check, independent of the 5 core methods
 above (uses only 3, chosen for philosophical diversity — Target Correlation, Mutual Information, Elastic

@@ -182,11 +182,11 @@ export function ModelConfigTab() {
 
   let devContent
   if (devPhase === 'connect') {
-    devContent = <UploadPage hideStepper onContinue={() => setDevPhase('health')} />
+    devContent = <UploadPage onContinue={() => setDevPhase('health')} />
   } else if (devPhase === 'health') {
     devContent = (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <PreprocessPage hideStepper onContinue={() => setDevPhase('modeldef')} />
+        <PreprocessPage onContinue={() => setDevPhase('modeldef')} />
         <div style={{ marginTop: '0.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
           <h3 style={{ marginTop: 0 }}>Correlation Matrix</h3>
           <p className="caption">
@@ -238,11 +238,11 @@ export function ModelConfigTab() {
   } else if (devPhase === 'discovery') {
     devContent = (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <FeatureSelectionPage hideStepper onContinue={() => setDevPhase('build')} lockedTargetY={activeTargetY ?? undefined} />
+        <FeatureSelectionPage onContinue={() => setDevPhase('build')} lockedTargetY={activeTargetY ?? undefined} />
       </div>
     )
   } else {
-    devContent = <TrainPage hideStepper onContinue={() => setOuterTab(1)} guided={guided} />
+    devContent = <TrainPage onContinue={() => setOuterTab(1)} guided={guided} />
   }
 
   return (

@@ -59,7 +59,6 @@ from config.settings import (
     FS_STABILITY_RUNS,
     FS_STABILITY_SAMPLE_FRAC,
     FS_WEAK_MAX_PRED_STRENGTH,
-    FS_WEIGHT_FEATURE_QUALITY,
     FS_WEIGHT_PREDICTIVE_STRENGTH,
     FS_WEIGHT_SELECTION_FREQ,
     FS_WEIGHT_STABILITY,
@@ -1636,7 +1635,7 @@ def _aggregate_from_per_target_results(
                     rank_vals.append(float(match.values[0]))
         avg_rank = float(np.nanmean(rank_vals)) if rank_vals else float(len(scope_features))
 
-        fq   = fq_scores.get(feat, 70.0)
+        fq   = fq_scores.get(feat, 70.0)   # still computed for VIF gate; not in FinalScore
         stab = stab_scores.get(feat, 50.0)
 
         # --- FinalScore (same damped formula as _aggregate_consensus) ---
@@ -1644,7 +1643,6 @@ def _aggregate_from_per_target_results(
         final_score = round(
             FS_WEIGHT_SELECTION_FREQ       * adjusted_freq
             + FS_WEIGHT_PREDICTIVE_STRENGTH * ps
-            + FS_WEIGHT_FEATURE_QUALITY     * fq
             + FS_WEIGHT_STABILITY           * stab,
             1,
         )

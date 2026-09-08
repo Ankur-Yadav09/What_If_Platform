@@ -88,14 +88,13 @@ All resolved to absolute, repo-root-anchored paths by `src/whatif/paths.py` (nev
 See [`MODEL_CONFIG_METHODS.md`](./MODEL_CONFIG_METHODS.md) for what each method actually computes;
 this is just the tunable weights/thresholds behind those computations.
 
-**Component weights** (of the Final Score; sum to 1.0 — `FS_WEIGHT_FEATURE_QUALITY` is `0.00` and
-kept only for import compatibility, not because it's dead code elsewhere):
+**Component weights** (of the Final Score; sum to 1.0 — Feature Quality is excluded, folded into
+upstream preprocessing / the VIF gate instead):
 
 | Setting | Default |
 |---|---|
 | `FS_WEIGHT_SELECTION_FREQ` | `0.30` |
 | `FS_WEIGHT_PREDICTIVE_STRENGTH` | `0.50` |
-| `FS_WEIGHT_FEATURE_QUALITY` | `0.00` (unused — FQ folded into upstream preprocessing / VIF gate) |
 | `FS_WEIGHT_STABILITY` | `0.20` |
 
 **Predictive Strength sub-weights** (5 active scoring methods; must sum to 1.0):
@@ -111,22 +110,18 @@ kept only for import compatibility, not because it's dead code elsewhere):
 **Multi-Y scaling**: `FS_MULTI_Y_PS_SCALE = 0.08` — each extra Y target softens PS recommendation
 thresholds by this fraction, capped at 4 extra targets (32% max softening).
 
-**Recommendation tier thresholds** (fields marked "unused in logic" remain only for import
-compatibility after FQ was removed from the Final Score — VIF is still a hard gate for Highly
-Recommended):
+**Recommendation tier thresholds** (VIF is still a hard gate for Highly Recommended; FQ itself was
+removed from the Final Score, and its now-unused quality thresholds were deleted from config):
 
 | Setting | Default | Tier / role |
 |---|---|---|
 | `FS_HIGHLY_REC_MIN_FINAL` | `70.0` | Highly Recommended — min Final Score. |
 | `FS_HIGHLY_REC_MIN_PRED_STRENGTH` | `65.0` | Highly Recommended — min Predictive Strength. |
-| `FS_HIGHLY_REC_MIN_QUALITY` | `60.0` | unused in logic. |
 | `FS_HIGHLY_REC_MAX_VIF` | `10.0` | Hard gate — VIF above this disqualifies Highly Recommended regardless of score. |
 | `FS_RECOMMENDED_MIN_FINAL` | `50.0` | Recommended — min Final Score. |
 | `FS_RECOMMENDED_MIN_PRED_STRENGTH` | `45.0` | Recommended — min Predictive Strength. |
-| `FS_RECOMMENDED_MIN_QUALITY` | `40.0` | unused in logic. |
 | `FS_CONSIDER_MIN_FINAL` | `35.0` | Consider — min Final Score. |
 | `FS_WEAK_MAX_PRED_STRENGTH` | `30.0` | Weak — max Predictive Strength (below this, flagged weak). |
-| `FS_WEAK_MAX_QUALITY` | `20.0` | unused in logic. |
 
 **Stability bootstrap** (repeated-subsample selection-frequency scoring):
 
@@ -148,8 +143,6 @@ Recommended):
 ## Legacy / unused — do not extend
 
 `PAGE_TITLE`, `PAGE_LAYOUT`, `SIDEBAR_STATE`, `NAVIGATION_OPTIONS`, `NAVIGATION_ICONS`, and
-`THEME_CSS` are Streamlit-era UI constants. Nothing in `backend/app/` or `frontend/` references
-them — grep confirms `config/settings.py` is their only occurrence in the repo. They exist only
-because `Scripts/` (read-only legacy reference — CLAUDE.md) still imports `config.settings` as a
-module. Don't wire new FastAPI/React code to these; the frontend's own theme lives in
+`THEME_CSS` were Streamlit-era UI constants with zero references anywhere in the repo (not even
+`Scripts/`) and were removed from `config/settings.py`. The frontend's own theme lives in
 `frontend/src/theme.css` per CLAUDE.md's "no UI library, hand-rolled CSS" convention.

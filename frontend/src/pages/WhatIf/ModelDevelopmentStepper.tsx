@@ -1,9 +1,5 @@
-// Progress stepper for What-If Studio's "Model Development" section — a
-// distinct phase set from the generic frontend/src/components/WorkflowStepper
-// (which is the Soft Sensor module's own standalone Connect Data -> ... ->
-// Live Prediction story). This one inserts "Model Definition" (Model
-// Mapping) in the middle and drops Live Prediction, matching Model
-// Development's own 5 steps. Model Development is an intentionally
+// Progress stepper for What-If Studio's "Model Development" section. Model
+// Development is an intentionally
 // non-linear, iterative workflow (rebuild models, revisit feature selection,
 // re-map parameters, any order) — so unlike a typical wizard stepper this
 // one is clickable on every phase, not just completed ones.

@@ -8,7 +8,6 @@ import { MultiSelectDropdown } from '../../components/MultiSelectDropdown'
 import { SectionBanner } from '../../components/SectionBanner'
 import { StepHeading } from '../../components/StepHeading'
 import { Tabs } from '../../components/Tabs'
-import { WorkflowStepper } from '../../components/WorkflowStepper'
 import { useJobPolling } from '../../hooks/useJobPolling'
 import { DEFAULT_CASE_ID, useActiveCase } from '../../state/ActiveCaseContext'
 import { useActiveDataset } from '../../state/ActiveDatasetContext'
@@ -62,9 +61,6 @@ function loadPersisted(key: string): PersistedFeatureDiscoveryState | null {
 }
 
 interface FeatureSelectionPageProps {
-  // See UploadPage's hideStepper for why: avoids a duplicate progress
-  // indicator when this page is embedded inside What-If Studio's tabs.
-  hideStepper?: boolean
   /** Forwarded to FinalApply, which requires it — see its own onContinue
    * doc for why this matters when embedded inside What-If Studio's Model
    * Development flow. */
@@ -75,7 +71,7 @@ interface FeatureSelectionPageProps {
   lockedTargetY?: string
 }
 
-export function FeatureSelectionPage({ hideStepper, onContinue, lockedTargetY }: FeatureSelectionPageProps) {
+export function FeatureSelectionPage({ onContinue, lockedTargetY }: FeatureSelectionPageProps) {
   const { activeCaseId } = useActiveCase()
   const { activeDataset: datasetName, setActiveDataset: setDatasetName } = useActiveDataset()
 
@@ -242,8 +238,6 @@ export function FeatureSelectionPage({ hideStepper, onContinue, lockedTargetY }:
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <h1>Feature Selection</h1>
-
-      {!hideStepper && <WorkflowStepper current="discovery" />}
 
       <div>
         <StepHeading step={1} title="Select Target (Y) Variable" />
