@@ -8,10 +8,15 @@ SoftSense AI — an industrial AI platform built around one product, **What-If S
 
 What-If Studio's own Model Config tab embeds a full model-development pipeline (upload process data, preprocess, run consensus feature selection, train a model — Denoising Autoencoder or classic ML — evaluate predictions) to produce the candidate models a scenario run can select from. This used to ship as a separate "Soft Sensor Module" with its own sidebar entry and landing page; it has neither anymore. Its pages (`pages/Upload/`, `Preprocess/`, `FeatureSelection/`, `Train/`, `SoftSensor/ExperimentHistoryPage.tsx`) are reused only as embedded tabs — their old standalone routes (`/upload`, `/preprocess`, `/soft-sensor-overview`, etc.) were dead code and have been removed from `routes.tsx`; `SoftSensor/OverviewPage.tsx` and `Predict/PredictPage.tsx`, which had no other callers, were deleted.
 
-Full detail lives in three docs — **read them, don't re-derive this from source**:
+Full detail lives in these docs — **read them, don't re-derive this from source**:
 - [`README.md`](./README.md) — setup, run instructions, project structure, feature list.
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — layering (routes→schemas→services→src, frontend page→api→component), the one persistence bridge between What-If Studio and its embedded pipeline, a full request trace.
 - [`docs/flow.md`](./docs/flow.md) — What-If Studio screen-by-screen: every tab, every backend call, the engine's per-parameter model-dispatch order (plugin → Selected Soft Sensor experiment → Kalman filter → baseline).
+- [`docs/MODEL_CONFIG_METHODS.md`](./docs/MODEL_CONFIG_METHODS.md) — deep, implementation-level reference for Model Definition, AI Feature Discovery, and Build Model: what each method/algorithm computes and why.
+- [`docs/API_REFERENCE.md`](./docs/API_REFERENCE.md) — every REST route in one table: method, path, request/response schema, which service it calls.
+- [`docs/DATA_SCHEMA.md`](./docs/DATA_SCHEMA.md) — `dashboard.db` tables, the 8-sheet `Config_file.xlsx` workbook, and the on-disk `Data/`/`Results/`/`saved_models/` layout.
+- [`docs/CONFIG_REFERENCE.md`](./docs/CONFIG_REFERENCE.md) — every constant/threshold/path in `config/settings.py`, grouped by what it controls.
+- [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md) — known, previously-observed failure modes (Windows file-lock errors, stuck jobs, case-scoping 404s) and their actual fixes.
 
 ## Commands
 
