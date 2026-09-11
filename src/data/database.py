@@ -67,6 +67,38 @@ def _ensure_column(conn: sqlite3.Connection, table: str, column: str, coltype: s
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {coltype}")
 
 
+def _migrate_whatif_model_selection_case_scoping(conn: sqlite3.Connection) -> None:
+    """One-time schema rebuild: whatif_model_selection.parameter was a
+    single-column PRIMARY KEY from before case isolation existed; case_id
+    was bolted on via _ensure_column but the PRIMARY KEY was never widened
+    to match. set_model_selection()'s DELETE is scoped to (case_id,
+    parameter), but the table's actual uniqueness constraint is still just
+    parameter -- so selecting a model for a parameter name already selected
+    in a *different* case deletes nothing (wrong case) and the following
+    INSERT collides with sqlite3.IntegrityError. Same rebuild pattern as
+    _migrate_datasets_case_scoping(): reconstruct every existing column,
+    widen the PRIMARY KEY to (case_id, parameter), copy every existing row
+    across unchanged (safe -- the old single-column PK already guaranteed at
+    most one row per parameter, so no two copied rows can collide under the
+    new composite key), drop the old table, rename. Guarded by checking
+    whether case_id is already part of the primary key, so this only ever
+    runs once per database."""
+    info = conn.execute("PRAGMA table_info(whatif_model_selection)").fetchall()
+    if any(row[1] == "case_id" and row[5] > 0 for row in info):
+        return  # already migrated
+
+    existing_cols = [row[1] for row in info]
+    col_defs = [f"{name} {coltype}" for (_cid, name, coltype, _notnull, _dflt, _pk) in info]
+    col_list = ", ".join(existing_cols)
+
+    conn.execute(
+        f"CREATE TABLE whatif_model_selection_new ({', '.join(col_defs)}, PRIMARY KEY (case_id, parameter))"
+    )
+    conn.execute(f"INSERT INTO whatif_model_selection_new ({col_list}) SELECT {col_list} FROM whatif_model_selection")
+    conn.execute("DROP TABLE whatif_model_selection")
+    conn.execute("ALTER TABLE whatif_model_selection_new RENAME TO whatif_model_selection")
+
+
 def _migrate_datasets_case_scoping(conn: sqlite3.Connection) -> None:
     """One-time schema rebuild: datasets.name was UNIQUE globally, but two
     different cases legitimately want to reuse the same dataset name (e.g.
@@ -149,10 +181,12 @@ def init_db() -> None:
         # persistence worlds (see ARCHITECTURE.md §4). One row per
         # (case_id, parameter); selecting a new model for the same parameter
         # in the same case replaces this row rather than adding another (see
-        # set_model_selection() — enforced in application code via an
-        # explicit DELETE+INSERT, not a composite PRIMARY KEY, since this
-        # table already shipped with a single-column `parameter` PK and
-        # SQLite can't cheaply change a PK on an existing table).
+        # set_model_selection()'s DELETE+INSERT). The PRIMARY KEY below is
+        # widened to (case_id, parameter) by
+        # _migrate_whatif_model_selection_case_scoping() further down — left
+        # as its original single-column `parameter` PK here so a brand-new
+        # database still goes through the exact same rebuild path as an
+        # existing one, matching _migrate_datasets_case_scoping()'s pattern.
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS whatif_model_selection (
@@ -169,6 +203,10 @@ def init_db() -> None:
         # so nothing changes for existing installs until a second case exists.
         _ensure_column(conn, "model_registry", "case_id", f"TEXT NOT NULL DEFAULT '{DEFAULT_CASE_ID}'")
         _ensure_column(conn, "whatif_model_selection", "case_id", f"TEXT NOT NULL DEFAULT '{DEFAULT_CASE_ID}'")
+        # Without this, selecting a model for a parameter name already
+        # selected in a *different* case throws sqlite3.IntegrityError — see
+        # _migrate_whatif_model_selection_case_scoping()'s docstring.
+        _migrate_whatif_model_selection_case_scoping(conn)
         # What-If "cases" — folder-per-case isolation modeled on the
         # legacy Streamlit reference app's multi-plant structure (see
         # src/whatif/paths.py's _case_dir()), applied here to isolated

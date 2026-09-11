@@ -1,7 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { clearModelSelection, deleteModel, getOverview, selectModelForParameter } from '../../api/whatIf'
+import {
+  clearModelSelection,
+  commitModelMapping,
+  deleteModel,
+  getModelMapping,
+  getOverview,
+  selectModelForParameter,
+} from '../../api/whatIf'
 import { Callout } from '../../components/Callout'
+import { withSyncedInputs } from '../WhatIf/ModelMappingEditor'
 import type { SavedModelSummary } from '../../api/types'
 
 function fmt(value: number | null): string {
@@ -61,20 +69,40 @@ function toExperimentRows(models: SavedModelSummary[]): ExperimentRow[] {
 // across every training run) and the model-selection page for What-If
 // Analysis: "Use for What-If Analysis" marks one experiment per Predicted
 // Parameter as the model What-If Analysis will actually run — see
-// src/whatif/engine.py::predict_and_update_with_soft_sensor_model. Every
-// past experiment stays visible for comparison even after a different one
-// is selected, until explicitly deleted via the 🗑️ button (which removes
-// it everywhere — all its rows here, plus any What-If selection pointing
-// at it — since one model can appear under several Predicted Parameters).
+// src/whatif/engine.py::predict_and_update_with_soft_sensor_model — and, like
+// Build Model's "Accept Model", also syncs that experiment's X features into
+// the parameter's own Model Definition row (withSyncedInputs) so switching
+// experiments here never leaves Model Definition pointing at a stale input
+// set (its algorithm display is derived live from the selection, no sync
+// needed for that). Every past experiment stays visible for comparison even
+// after a different one is selected, until explicitly deleted via the 🗑️
+// button (which removes it everywhere — all its rows here, plus any What-If
+// selection pointing at it — since one model can appear under several
+// Predicted Parameters).
 export function ExperimentHistoryPage() {
   const queryClient = useQueryClient()
   const overviewQuery = useQuery({ queryKey: ['overview'], queryFn: getOverview })
+  // Same query key ModelConfigTab.tsx uses for Model Definition's own rows,
+  // so a sync written from either page is immediately visible on the other.
+  const modelMappingQuery = useQuery({ queryKey: ['whatif-model-mapping'], queryFn: getModelMapping })
   const [parameterFilter, setParameterFilter] = useState('')
 
+  const commitMappingMutation = useMutation({
+    mutationFn: commitModelMapping,
+    onSuccess: (result) =>
+      queryClient.setQueryData(['whatif-model-mapping'], {
+        rows: result,
+        historian_tags: modelMappingQuery.data?.historian_tags ?? [],
+      }),
+  })
+
   const selectMutation = useMutation({
-    mutationFn: ({ parameter, modelName }: { parameter: string; modelName: string }) =>
+    mutationFn: ({ parameter, modelName }: { parameter: string; modelName: string; xCols: string[] }) =>
       selectModelForParameter(parameter, modelName),
-    onSuccess: (data) => queryClient.setQueryData(['overview'], data),
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(['overview'], data)
+      commitMappingMutation.mutate(withSyncedInputs(modelMappingQuery.data?.rows ?? [], variables.parameter, variables.xCols))
+    },
   })
   const clearMutation = useMutation({
     mutationFn: (parameter: string) => clearModelSelection(parameter),
@@ -202,8 +230,15 @@ export function ExperimentHistoryPage() {
                         ) : (
                           <button
                             className="chip"
-                            disabled={pending}
-                            onClick={() => selectMutation.mutate({ parameter, modelName: m.name })}
+                            disabled={pending || modelMappingQuery.isLoading}
+                            title={
+                              modelMappingQuery.isLoading
+                                ? 'Loading Model Definition — please wait'
+                                : undefined
+                            }
+                            onClick={() =>
+                              selectMutation.mutate({ parameter, modelName: m.name, xCols: m.x_cols })
+                            }
                           >
                             Use for What-If Analysis
                           </button>

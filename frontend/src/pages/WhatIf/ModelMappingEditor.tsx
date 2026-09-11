@@ -8,11 +8,38 @@ import { useTouchedRowIndices } from './useTouchedRowIndices'
 import { SECTION_OPTIONS } from './whatIfConstants'
 import type { ModelDetailsRow, MvDvCvTagRow, PiMappingRow, SavedModelSummary } from '../../api/types'
 
-// Exported so ModelConfigTab.tsx can write AI Feature Discovery/Build
-// Model's accepted X features into these exact backend column names on
-// Accept — see MODEL_DETAILS_COLUMNS in src/whatif/config_io.py (a fixed
-// 8-slot schema; there's no room for more than INPUT_COLS.length features).
+// Exported so ModelConfigTab.tsx (Accept) and ExperimentHistoryPage.tsx (Use
+// for What-If Analysis) can write a model's X features into these exact
+// backend column names — see MODEL_DETAILS_COLUMNS in
+// src/whatif/config_io.py (a fixed 8-slot schema; there's no room for more
+// than INPUT_COLS.length features).
 export const INPUT_COLS = Array.from({ length: 8 }, (_, i) => `Input parameter_${i + 1}`)
+
+// Writes a model's X features into its Predicted Parameter's own Input
+// parameter_1..8 cells (truncated to INPUT_COLS.length) so Model Definition
+// reflects them without the user re-entering anything. Blanks any slots
+// beyond xCols.length so re-syncing with fewer features doesn't leave stale
+// tags behind from a previous model. Used both when Build Model's guided
+// loop accepts a model and when Experimentation picks a different one for
+// an already-configured parameter.
+//
+// If no row for targetY exists yet -- e.g. the model was trained directly
+// from Build Model without going through Model Definition's "Configure
+// Model" first, so Feature Discovery's target-Y picker was never locked to
+// an existing row -- a new Data-model row (the default model type, see
+// isDataModelRow) is appended instead of silently doing nothing. Otherwise
+// a What-If Analysis selection for that parameter would be a dead entry:
+// the engine's dependency graph is built purely from Model Definition rows,
+// so a parameter absent there never runs at all.
+export function withSyncedInputs(rows: ModelDetailsRow[], targetY: string, xCols: string[]): ModelDetailsRow[] {
+  const trimmed = xCols.slice(0, INPUT_COLS.length)
+  const inputs = Object.fromEntries(INPUT_COLS.map((col, i) => [col, trimmed[i] ?? '']))
+  const matched = rows.some((r) => (r['Predicted parameter'] ?? '').toString().trim() === targetY)
+  const synced = rows.map((r) =>
+    (r['Predicted parameter'] ?? '').toString().trim() === targetY ? { ...r, ...inputs } : r,
+  )
+  return matched ? synced : [...synced, { 'Predicted parameter': targetY, Section: '', ...inputs }]
+}
 const STICKY_COL_WIDTH = 200
 // Matches src/whatif/config_io.py::_is_data_model() exactly: blank/"Data
 // model" is Kalman/Soft-Sensor-driven (the default); anything else — here,

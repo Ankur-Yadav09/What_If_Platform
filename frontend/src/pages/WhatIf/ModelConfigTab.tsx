@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { getFeatureStats } from '../../api/preprocess'
 import {
   commitModelMapping,
+  deleteModel,
   getModelMapping,
   getModelsStatus,
   getMvDvCvTaglist,
@@ -24,29 +25,10 @@ import { allowedSet } from './caseSetupHelpers'
 import { CorrelationMatrixView } from './CorrelationMatrixView'
 import { FormulaEditor } from './FormulaEditor'
 import { ModelDevelopmentStepper } from './ModelDevelopmentStepper'
-import { findSelectedModel, INPUT_COLS, isDataModelRow, ModelMappingEditor } from './ModelMappingEditor'
+import { findSelectedModel, isDataModelRow, ModelMappingEditor, withSyncedInputs } from './ModelMappingEditor'
 import { ModelStatusPanel } from './ModelStatusPanel'
 import { TrainingDataUpload } from './TrainingDataUpload'
-import type { ModelDetailsRow } from '../../api/types'
 import type { ModelDevPhaseKey } from './ModelDevelopmentStepper'
-
-// Writes a just-accepted model's X features into its Predicted Parameter's
-// own Input parameter_1..8 cells (truncated to INPUT_COLS.length -- the
-// config file's fixed 8-slot schema, src/whatif/config_io.py's
-// MODEL_DETAILS_COLUMNS) so Model Definition reflects them without the user
-// re-entering anything. Blanks any slots beyond xCols.length so a re-Accept
-// with fewer features doesn't leave stale tags behind from a previous run.
-function withSyncedInputs(rows: ModelDetailsRow[], targetY: string, xCols: string[]): ModelDetailsRow[] {
-  const trimmed = xCols.slice(0, INPUT_COLS.length)
-  return rows.map((r) => {
-    if ((r['Predicted parameter'] ?? '').toString().trim() !== targetY) return r
-    const next = { ...r }
-    INPUT_COLS.forEach((col, i) => {
-      next[col] = trimmed[i] ?? ''
-    })
-    return next
-  })
-}
 
 // "Model Config" section of What-If Setup, split into the two logical parts
 // of building a model: an iterative "Model Development" workflow (Connect
@@ -115,6 +97,14 @@ export function ModelConfigTab() {
       }),
   })
 
+  // Discards a rejected training candidate on Retrain, so it doesn't linger
+  // as a permanent (never-selected) experiment — see TrainPage's "🔁 Retrain
+  // Model" button. Same endpoint ExperimentHistoryPage's own 🗑️ Delete uses.
+  const deleteRejectedMutation = useMutation({
+    mutationFn: deleteModel,
+    onSuccess: (data) => queryClient.setQueryData(['overview'], data),
+  })
+
   const sectionOrderList = (sectionOrderQuery.data ?? []).map((r) => r.Section?.trim() ?? '').filter(Boolean)
   const allowed = allowedSet(sectionOrderList, targetSection)
   const piRows = piMappingQuery.data ?? []
@@ -170,8 +160,17 @@ export function ModelConfigTab() {
     setDevPhase('modeldef')
   }
 
+  // Retrain deletes the just-trained (rejected) candidate — fire-and-forget,
+  // consistent with how Accept doesn't block navigation on its own
+  // mutations either — and jumps back to Feature Discovery with the same
+  // target still locked (activeTargetY is left as-is).
+  function handleImprove(modelName: string) {
+    deleteRejectedMutation.mutate(modelName)
+    setDevPhase('discovery')
+  }
+
   const guided = activeTargetY
-    ? { targetY: activeTargetY, onAccept: handleAccept, onImprove: () => setDevPhase('discovery') }
+    ? { targetY: activeTargetY, onAccept: handleAccept, onImprove: handleImprove }
     : undefined
 
   const readyForAnalysis =

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { listProjects } from '../../api/preprocess'
+import { deleteModel } from '../../api/whatIf'
 import { submitTraining } from '../../api/training'
 import { Callout } from '../../components/Callout'
 import { LineChart } from '../../components/LineChart'
@@ -11,16 +12,17 @@ import { ALGO_DEFAULTS, ALGO_FIELDS, ALGORITHMS, toApiHyperparameters } from './
 import type { TrainingResult } from '../../api/types'
 
 /** Set only by Model Definition's guided per-parameter loop (ModelConfigTab).
- * Replaces the plain "Continue" button with an Accept/Improve decision so
+ * Replaces the plain "Continue" button with an Accept/Retrain decision so
  * the user can loop back to AI Feature Discovery instead of being forced to
  * treat training as one-shot. Accepting always marks the parameter Model
  * Ready AND selects this experiment for What-If Analysis (ModelConfigTab's
- * onAccept does both in one step — no separate "save as experiment" prompt,
- * since every training run is already saved regardless). */
+ * onAccept does both in one step — no separate "save as experiment" prompt).
+ * Retraining deletes the just-trained candidate (ModelConfigTab's onImprove)
+ * so a rejected run doesn't linger in Experimentation forever. */
 export interface GuidedTrainProps {
   targetY: string
   onAccept: (modelName: string) => void
-  onImprove: () => void
+  onImprove: (modelName: string) => void
 }
 
 interface TrainPageProps {
@@ -62,6 +64,19 @@ export function TrainPage({ onContinue, guided }: TrainPageProps) {
       queryClient.invalidateQueries({ queryKey: ['overview'] })
     }
   }, [result, queryClient])
+
+  // Unguided "❌ Reject Model" (no locked target Y, so there's nowhere
+  // target-specific to loop back to) -- deletes the just-trained candidate,
+  // same endpoint the guided "🔁 Retrain Model" and Experimentation's own
+  // 🗑️ Delete use, then clears jobId so the training form reappears right
+  // here for another attempt without losing the chosen project/algorithm.
+  const rejectMutation = useMutation({
+    mutationFn: deleteModel,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['overview'] })
+      setJobId(null)
+    },
+  })
 
   const selectedProject = (projectsQuery.data ?? []).find((p) => p.project_id === projectId)
   const canSubmit = !!projectId && !submitMutation.isPending
@@ -248,14 +263,27 @@ export function TrainPage({ onContinue, guided }: TrainPageProps) {
           {guided ? (
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
               <button onClick={() => guided.onAccept(result.model_name)}>✅ Accept Model</button>
-              <button className="chip" onClick={guided.onImprove}>
-                ↻ Improve Features & Retrain
+              <button className="chip" onClick={() => guided.onImprove(result.model_name)}>
+                🔁 Retrain Model
               </button>
             </div>
           ) : (
-            <button style={{ marginTop: '1.25rem' }} onClick={onContinue}>
-              Continue to Experimentation & Model Selection →
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+              <button onClick={onContinue}>✅ Accept Model & Continue to Experimentation →</button>
+              <button
+                className="chip"
+                disabled={rejectMutation.isPending}
+                onClick={() => rejectMutation.mutate(result.model_name)}
+              >
+                {rejectMutation.isPending ? 'Rejecting…' : '❌ Reject Model'}
+              </button>
+            </div>
+          )}
+
+          {rejectMutation.isError && (
+            <div style={{ marginTop: '0.75rem' }}>
+              <Callout variant="error">Failed to reject the model — it may still be listed in Experimentation.</Callout>
+            </div>
           )}
         </div>
       )}
