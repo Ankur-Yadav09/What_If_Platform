@@ -29,10 +29,10 @@ export function AutomatedPreprocessingTab({ datasetName, onCleaned }: AutomatedP
         subtitle="One click — runs the optimal cleaning pipeline with best-default settings and shows each step applied."
       />
       <p className="caption">
-        Best-default pipeline: <strong>Cast to numeric</strong> → <strong>Remove duplicates</strong> →{' '}
-        <strong>Drop high-missing columns (≥50%)</strong> → <strong>Remove constant columns</strong> →{' '}
-        <strong>Remove near-zero variance columns (std&lt;0.01)</strong> → <strong>Median imputation</strong> →{' '}
-        <strong>IQR capping (1.5×)</strong>
+        Best-default pipeline: <strong>Cast to numeric</strong> → <strong>Remove duplicate records</strong> →{' '}
+        <strong>Remove columns with missing values ≥ 50%</strong> → <strong>Remove constant columns</strong> →{' '}
+        <strong>Remove columns with CV% &lt; 1 or &gt; 75</strong>. Domain Filters, Missing Value Imputation, and
+        Outlier Detection are skipped.
       </p>
 
       <button onClick={() => mutation.mutate()} disabled={mutation.isPending} style={{ alignSelf: 'flex-start' }}>

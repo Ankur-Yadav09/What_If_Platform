@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import io
 import json
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -357,28 +357,36 @@ def _apply_remove_outliers_zscore(working: pd.DataFrame, cols: List[str], thr: f
     return result, n_before - len(result)
 
 
+def _coefficient_of_variation_pct(series: pd.Series) -> float:
+    """abs(std/mean)*100. A zero-mean, non-constant column is treated as
+    infinitely variable (always fails a CV-upper-bound check) rather than
+    raising a division error; a genuinely constant column (std == 0) is 0%
+    regardless of its mean, so it's still caught by a CV-lower-bound check."""
+    mean = series.mean()
+    std = series.std()
+    if mean == 0:
+        return 0.0 if std == 0 else float("inf")
+    return abs(std / mean) * 100
+
+
 def apply_basic_cleaning(
     dataset_name: str,
     new_dataset_name: Optional[str],
+    domain_filters: Optional[Dict[str, Dict[str, float]]],
+    impute_rules: Optional[Dict[str, Dict[str, Any]]],
     remove_missing_rows: bool,
     remove_duplicates: bool,
     remove_missing_cols: bool,
     missing_col_threshold: float,
     remove_constant_cols: bool,
-    remove_nzv_cols: bool,
-    nzv_threshold: float,
-    impute_method: str,
-    impute_cols: Optional[List[str]],
-    custom_fill_value: float,
-    outlier_method: str,
-    outlier_cols: Optional[List[str]],
-    zscore_threshold: float,
-    winsor_lo: float,
-    winsor_hi: float,
-    cap_multiplier: float,
-    domain_filters: Optional[Dict[str, Dict[str, float]]],
+    remove_cv_outlier_cols: bool,
+    cv_low_threshold: float,
+    cv_high_threshold: float,
+    outlier_rules: Optional[Dict[str, Dict[str, Any]]],
     case_id: str = DEFAULT_CASE_ID,
 ) -> dict:
+    """Manual Preprocessing pipeline, in workflow order: Domain Filters ->
+    Missing Value Imputation -> Remove Records/Columns -> Outlier Detection."""
     df = load_dataset_from_db(dataset_name, case_id)
     if df is None:
         raise HTTPException(status_code=422, detail=f"Dataset '{dataset_name}' could not be loaded.")
@@ -387,6 +395,40 @@ def apply_basic_cleaning(
     before_rows, before_cols = working.shape
     action_log: List[str] = []
 
+    # 1. Domain Filters
+    if domain_filters:
+        for tag, bounds in domain_filters.items():
+            if tag in working.columns:
+                working[tag] = working[tag].clip(bounds["min"], bounds["max"])
+        action_log.append(f"Domain filters applied to {len(domain_filters)} tag(s).")
+
+    # 2. Missing Value Imputation — one rule (method [+ custom fill value]) per column
+    if impute_rules:
+        n_filled = 0
+        touched_cols = 0
+        for col, rule in impute_rules.items():
+            if col not in working.columns:
+                continue
+            n_miss = int(working[col].isnull().sum())
+            if n_miss == 0:
+                continue
+            method = rule.get("method", "Mean")
+            if method == "Mean":
+                working[col] = working[col].fillna(working[col].mean())
+            elif method == "Median":
+                working[col] = working[col].fillna(working[col].median())
+            elif method == "Forward Fill":
+                working[col] = working[col].ffill()
+            elif method == "Backward Fill":
+                working[col] = working[col].bfill()
+            elif method == "Custom Value":
+                working[col] = working[col].fillna(rule.get("custom_fill_value", 0.0))
+            n_filled += n_miss
+            touched_cols += 1
+        action_log.append(f"Imputed {n_filled} missing value(s) across {touched_cols} column(s) (per-column rules).")
+
+    # 3. Remove Records/Columns
+    ## Record Removal
     if remove_missing_rows:
         n_before = len(working)
         working = working.dropna().reset_index(drop=True)
@@ -397,6 +439,7 @@ def apply_basic_cleaning(
         working = working.drop_duplicates().reset_index(drop=True)
         action_log.append(f"Removed {n_before - len(working)} duplicate row(s).")
 
+    ## Column Removal
     if remove_missing_cols:
         num_cols_now = working.select_dtypes(include=[np.number]).columns.tolist()
         drop_cols = [c for c in num_cols_now if working[c].isnull().mean() * 100 >= missing_col_threshold]
@@ -417,66 +460,45 @@ def apply_basic_cleaning(
             + (f": {', '.join(drop_cols)}" if drop_cols else "") + "."
         )
 
-    if remove_nzv_cols:
+    if remove_cv_outlier_cols:
         num_cols_now = working.select_dtypes(include=[np.number]).columns.tolist()
-        drop_cols = [c for c in num_cols_now if 0 < working[c].std() < nzv_threshold]
+        cv_by_col = {c: _coefficient_of_variation_pct(working[c]) for c in num_cols_now}
+        drop_cols = [c for c, cv in cv_by_col.items() if cv < cv_low_threshold or cv > cv_high_threshold]
         if drop_cols:
             working = working.drop(columns=drop_cols)
         action_log.append(
-            f"Removed {len(drop_cols)} near-zero variance column(s) (std < {nzv_threshold})"
+            f"Removed {len(drop_cols)} column(s) with CV% < {cv_low_threshold} or CV% > {cv_high_threshold}"
             + (f": {', '.join(drop_cols)}" if drop_cols else "") + "."
         )
 
-    if impute_method != "None":
-        numeric_cols = working.select_dtypes(include=[np.number]).columns.tolist()
-        target_cols = [c for c in (impute_cols or [c for c in numeric_cols if working[c].isnull().any()]) if c in working.columns]
-        n_filled = 0
-        for col in target_cols:
-            n_miss = int(working[col].isnull().sum())
-            if n_miss == 0:
+    # 4. Outlier Detection — one rule (method [+ its own parameters]) per column
+    if outlier_rules:
+        for tag, rule in outlier_rules.items():
+            if tag not in working.columns:
                 continue
-            if impute_method == "Mean":
-                working[col] = working[col].fillna(working[col].mean())
-            elif impute_method == "Median":
-                working[col] = working[col].fillna(working[col].median())
-            elif impute_method == "Mode":
-                mode_val = working[col].mode()
-                working[col] = working[col].fillna(mode_val.iloc[0] if not mode_val.empty else 0)
-            elif impute_method == "Forward Fill":
-                working[col] = working[col].ffill()
-            elif impute_method == "Backward Fill":
-                working[col] = working[col].bfill()
-            elif impute_method == "Custom Value":
-                working[col] = working[col].fillna(custom_fill_value)
-            n_filled += n_miss
-        action_log.append(f"Imputed {n_filled} missing value(s) using {impute_method} across {len(target_cols)} column(s).")
-
-    resolved_outlier_cols = [c for c in (outlier_cols or []) if c in working.columns]
-    if outlier_method != "None" and resolved_outlier_cols:
-        if outlier_method == "IQR Capping":
-            working, n = _apply_capping_flooring(working, resolved_outlier_cols, 1.5)
-            action_log.append(f"IQR capping applied — {n} value(s) capped.")
-        elif outlier_method == "Z-Score Capping":
-            working, n = _apply_zscore_cap(working, resolved_outlier_cols, zscore_threshold)
-            action_log.append(f"Z-Score capping (thr={zscore_threshold}) — {n} value(s) capped.")
-        elif outlier_method == "Winsorization":
-            working, n = _apply_winsorization(working, resolved_outlier_cols, winsor_lo, winsor_hi)
-            action_log.append(f"Winsorization ({winsor_lo}%-{winsor_hi}%) — {n} value(s) capped.")
-        elif outlier_method == "Capping/Flooring (custom IQR multiplier)":
-            working, n = _apply_capping_flooring(working, resolved_outlier_cols, cap_multiplier)
-            action_log.append(f"IQR capping (x{cap_multiplier}) — {n} value(s) capped.")
-        elif outlier_method == "Remove Outliers (IQR)":
-            working, n = _apply_remove_outliers_iqr(working, resolved_outlier_cols)
-            action_log.append(f"Removed {n} outlier row(s) via IQR.")
-        elif outlier_method == "Remove Outliers (Z-Score)":
-            working, n = _apply_remove_outliers_zscore(working, resolved_outlier_cols, zscore_threshold)
-            action_log.append(f"Removed {n} outlier row(s) via Z-Score (thr={zscore_threshold}).")
-
-    if domain_filters:
-        for tag, bounds in domain_filters.items():
-            if tag in working.columns:
-                working[tag] = working[tag].clip(bounds["min"], bounds["max"])
-        action_log.append(f"Domain filters applied to {len(domain_filters)} tag(s).")
+            method = rule.get("method", "IQR Capping")
+            zscore_threshold = rule.get("zscore_threshold", 3.0)
+            if method == "IQR Capping":
+                working, n = _apply_capping_flooring(working, [tag], 1.5)
+                action_log.append(f"{tag}: IQR capping — {n} value(s) capped.")
+            elif method == "Z-Score Capping":
+                working, n = _apply_zscore_cap(working, [tag], zscore_threshold)
+                action_log.append(f"{tag}: Z-Score capping (thr={zscore_threshold}) — {n} value(s) capped.")
+            elif method == "Winsorization":
+                winsor_lo = rule.get("winsor_lo", 2.5)
+                winsor_hi = rule.get("winsor_hi", 97.5)
+                working, n = _apply_winsorization(working, [tag], winsor_lo, winsor_hi)
+                action_log.append(f"{tag}: Winsorization ({winsor_lo}%-{winsor_hi}%) — {n} value(s) capped.")
+            elif method == "Capping/Flooring (custom IQR multiplier)":
+                cap_multiplier = rule.get("cap_multiplier", 1.5)
+                working, n = _apply_capping_flooring(working, [tag], cap_multiplier)
+                action_log.append(f"{tag}: IQR capping (x{cap_multiplier}) — {n} value(s) capped.")
+            elif method == "Remove Outliers (IQR)":
+                working, n = _apply_remove_outliers_iqr(working, [tag])
+                action_log.append(f"{tag}: Removed {n} outlier row(s) via IQR.")
+            elif method == "Remove Outliers (Z-Score)":
+                working, n = _apply_remove_outliers_zscore(working, [tag], zscore_threshold)
+                action_log.append(f"{tag}: Removed {n} outlier row(s) via Z-Score (thr={zscore_threshold}).")
 
     after_rows, after_cols = working.shape
     result_name = new_dataset_name or f"{dataset_name}_cleaned"
@@ -495,6 +517,11 @@ def apply_basic_cleaning(
 def apply_automated_cleaning(
     dataset_name: str, new_dataset_name: Optional[str], case_id: str = DEFAULT_CASE_ID
 ) -> dict:
+    """Fixed one-click recipe: Remove Records/Columns only (dedupe, drop
+    >=50% missing cols, drop constant cols, drop CV%<1-or->75 cols).
+    Domain Filters, Missing Value Imputation, and Outlier Detection are
+    deliberately skipped -- unlike Manual Preprocessing, this has no
+    per-run configuration to base those steps on."""
     df = load_dataset_from_db(dataset_name, case_id)
     if df is None:
         raise HTTPException(status_code=422, detail=f"Dataset '{dataset_name}' could not be loaded.")
@@ -520,28 +547,11 @@ def apply_automated_cleaning(
     step_log.append(f"Remove constant columns — {len(const_drop)} column(s) removed" + (f": {', '.join(const_drop)}" if const_drop else "") + ".")
 
     num_cols = working.select_dtypes(include=[np.number]).columns.tolist()
-    nzv_drop = [c for c in num_cols if 0 < working[c].std() < 0.01]
-    if nzv_drop:
-        working = working.drop(columns=nzv_drop)
-    step_log.append(f"Remove near-zero variance columns (std<0.01) — {len(nzv_drop)} column(s) removed" + (f": {', '.join(nzv_drop)}" if nzv_drop else "") + ".")
-
-    n_filled = 0
-    for col in working.select_dtypes(include=[np.number]).columns:
-        n_miss = int(working[col].isnull().sum())
-        if n_miss > 0:
-            working[col] = working[col].fillna(working[col].median())
-            n_filled += n_miss
-    step_log.append(f"Median imputation — {n_filled} missing value(s) filled.")
-
-    n_capped = 0
-    for col in working.select_dtypes(include=[np.number]).columns:
-        s = working[col]
-        q1, q3 = s.quantile(0.25), s.quantile(0.75)
-        iqr = q3 - q1
-        lo, hi = q1 - 1.5 * iqr, q3 + 1.5 * iqr
-        n_capped += int(((s < lo) | (s > hi)).sum())
-        working[col] = s.clip(lo, hi)
-    step_log.append(f"IQR capping (1.5x) — {n_capped} value(s) capped.")
+    cv_by_col = {c: _coefficient_of_variation_pct(working[c]) for c in num_cols}
+    cv_drop = [c for c, cv in cv_by_col.items() if cv < 1 or cv > 75]
+    if cv_drop:
+        working = working.drop(columns=cv_drop)
+    step_log.append(f"Remove columns with CV% < 1 or CV% > 75 — {len(cv_drop)} column(s) removed" + (f": {', '.join(cv_drop)}" if cv_drop else "") + ".")
 
     result_name = new_dataset_name or f"{dataset_name}_auto_cleaned"
     save_dataset_to_db(result_name, working, case_id=case_id)

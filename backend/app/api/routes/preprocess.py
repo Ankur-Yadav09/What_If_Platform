@@ -52,26 +52,26 @@ def apply_basic_cleaning(body: BasicCleaningRequest, case_id: str = Query("defau
     domain_filters = (
         {k: v.model_dump() for k, v in body.domain_filters.items()} if body.domain_filters else None
     )
+    impute_rules = (
+        {k: v.model_dump() for k, v in body.impute_rules.items()} if body.impute_rules else None
+    )
+    outlier_rules = (
+        {k: v.model_dump() for k, v in body.outlier_rules.items()} if body.outlier_rules else None
+    )
     result = preprocess_service.apply_basic_cleaning(
         dataset_name=body.dataset_name,
         new_dataset_name=body.new_dataset_name,
+        domain_filters=domain_filters,
+        impute_rules=impute_rules,
         remove_missing_rows=body.remove_missing_rows,
         remove_duplicates=body.remove_duplicates,
         remove_missing_cols=body.remove_missing_cols,
         missing_col_threshold=body.missing_col_threshold,
         remove_constant_cols=body.remove_constant_cols,
-        remove_nzv_cols=body.remove_nzv_cols,
-        nzv_threshold=body.nzv_threshold,
-        impute_method=body.impute_method,
-        impute_cols=body.impute_cols,
-        custom_fill_value=body.custom_fill_value,
-        outlier_method=body.outlier_method,
-        outlier_cols=body.outlier_cols,
-        zscore_threshold=body.zscore_threshold,
-        winsor_lo=body.winsor_lo,
-        winsor_hi=body.winsor_hi,
-        cap_multiplier=body.cap_multiplier,
-        domain_filters=domain_filters,
+        remove_cv_outlier_cols=body.remove_cv_outlier_cols,
+        cv_low_threshold=body.cv_low_threshold,
+        cv_high_threshold=body.cv_high_threshold,
+        outlier_rules=outlier_rules,
         case_id=case_id,
     )
     return CleaningResponse(**result)

@@ -47,26 +47,33 @@ export interface DomainFilterBounds {
   max: number
 }
 
+export interface ImputeRuleSpec {
+  method: string
+  custom_fill_value?: number
+}
+
+export interface OutlierRuleSpec {
+  method: string
+  zscore_threshold?: number
+  winsor_lo?: number
+  winsor_hi?: number
+  cap_multiplier?: number
+}
+
 export interface BasicCleaningRequest {
   dataset_name: string
   new_dataset_name?: string
+  domain_filters?: Record<string, DomainFilterBounds>
+  impute_rules?: Record<string, ImputeRuleSpec>
   remove_missing_rows?: boolean
   remove_duplicates?: boolean
   remove_missing_cols?: boolean
   missing_col_threshold?: number
   remove_constant_cols?: boolean
-  remove_nzv_cols?: boolean
-  nzv_threshold?: number
-  impute_method?: string
-  impute_cols?: string[]
-  custom_fill_value?: number
-  outlier_method?: string
-  outlier_cols?: string[]
-  zscore_threshold?: number
-  winsor_lo?: number
-  winsor_hi?: number
-  cap_multiplier?: number
-  domain_filters?: Record<string, DomainFilterBounds>
+  remove_cv_outlier_cols?: boolean
+  cv_low_threshold?: number
+  cv_high_threshold?: number
+  outlier_rules?: Record<string, OutlierRuleSpec>
 }
 
 export interface CleaningResponse {

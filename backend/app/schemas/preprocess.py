@@ -20,6 +20,19 @@ class DomainFilter(BaseModel):
     max: float
 
 
+class ImputeRule(BaseModel):
+    method: str
+    custom_fill_value: float = 0.0
+
+
+class OutlierRule(BaseModel):
+    method: str
+    zscore_threshold: float = 3.0
+    winsor_lo: float = 2.5
+    winsor_hi: float = 97.5
+    cap_multiplier: float = 1.5
+
+
 class ApplyPreprocessingRequest(BaseModel):
     dataset_name: str
     x_cols: List[str]
@@ -76,23 +89,17 @@ class FeatureDetailResponse(BaseModel):
 class BasicCleaningRequest(BaseModel):
     dataset_name: str
     new_dataset_name: Optional[str] = None
+    domain_filters: Optional[Dict[str, DomainFilter]] = None
+    impute_rules: Optional[Dict[str, ImputeRule]] = None
     remove_missing_rows: bool = False
     remove_duplicates: bool = False
     remove_missing_cols: bool = False
     missing_col_threshold: float = 50.0
     remove_constant_cols: bool = False
-    remove_nzv_cols: bool = False
-    nzv_threshold: float = 0.01
-    impute_method: str = "None"
-    impute_cols: Optional[List[str]] = None
-    custom_fill_value: float = 0.0
-    outlier_method: str = "None"
-    outlier_cols: Optional[List[str]] = None
-    zscore_threshold: float = 3.0
-    winsor_lo: float = 2.5
-    winsor_hi: float = 97.5
-    cap_multiplier: float = 1.5
-    domain_filters: Optional[Dict[str, DomainFilter]] = None
+    remove_cv_outlier_cols: bool = False
+    cv_low_threshold: float = 1.0
+    cv_high_threshold: float = 75.0
+    outlier_rules: Optional[Dict[str, OutlierRule]] = None
 
 
 class CleaningResponse(BaseModel):
